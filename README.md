@@ -1,36 +1,137 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TORA ET MANGAL
 
-## Getting Started
+Premium steakhouse / mangal restoranı için production-ready QR menü, masa siparişi, sipariş takibi ve yönetim paneli.
 
-First, run the development server:
+Müşteri masadaki QR kodu okutur, dijital menüden sipariş verir, garson veya hesap ister. Restoran ekibi aynı siparişleri admin panelinden canlı yönetir.
+
+## Teknolojiler
+
+- Next.js 16 (App Router) + React 19 + TypeScript
+- Tailwind CSS 4
+- Prisma ORM + PostgreSQL
+- Zustand (kalıcı sepet)
+- Zod + React Hook Form
+- Jose (HttpOnly JWT oturum) + bcryptjs
+- Motion, Lucide, `qrcode`
+
+## Kurulum
+
+```bash
+npm install
+```
+
+PostgreSQL için Docker (yerel 5432 doluysa 5433 kullanılır):
+
+```bash
+docker compose up -d
+```
+
+Ortam dosyası:
+
+```bash
+copy .env.example .env
+```
+
+`.env` içinde özellikle şunları doldurun:
+
+- `DATABASE_URL`
+- `AUTH_SECRET` (en az 16 karakter, üretimde uzun rastgele değer)
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` (seed ile admin hesabı oluşur)
+- `NEXT_PUBLIC_SITE_URL`
+- telefon, WhatsApp, Instagram, Maps
+
+## Veritabanı
+
+```bash
+npx prisma migrate dev --name init
+npm run db:seed
+npm run db:studio
+```
+
+İlk kurulumda migration yerine şema eşlemesi de kullanılabilir:
+
+```bash
+npm run db:push
+npm run db:seed
+```
+
+Seed şunları yükler:
+
+- 8 kategori
+- 30+ ürün
+- 20 masa (her biri özel QR menü)
+- restoran ayarları
+- admin kullanıcısı (`.env` içindeki e-posta/şifre)
+
+## Geliştirme
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Site: [http://localhost:3000](http://localhost:3000)
+- Menü: [http://localhost:3000/menu](http://localhost:3000/menu)
+- Masa 12 QR: [http://localhost:3000/qr/12](http://localhost:3000/qr/12)
+- Admin: [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm test
+npm run build
+npm start
+```
 
-## Learn More
+Vercel’e deploy ederken PostgreSQL (Neon, Supabase, RDS vb.) bağlayın. `prisma generate` `postinstall` ve `build` içinde çalışır.
 
-To learn more about Next.js, take a look at the following resources:
+Gerekli Vercel env değişkenleri `.env.example` ile aynıdır.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Admin erişimi
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Kimlik bilgileri koda gömülmez. `npm run db:seed` çalışınca `ADMIN_EMAIL` ve `ADMIN_PASSWORD` ile bir `User` kaydı oluşur. Oturum HttpOnly cookie + JWT ile tutulur. `/admin` ve `/api/admin/*` middleware ile korunur.
 
-## Deploy on Vercel
+## QR sistemi
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Her masa için URL:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`https://domain.com/qr/{masaNo}`
+
+Örnek: Masa 12 → `/qr/12`
+
+QR okutulunca masa numarası sepete yazılır. Sipariş `tableId` ile kaydedilir. Admin panelinde masa, ürünler, toplam ve durum görünür.
+
+Admin > Masalar > QR görüntüle:
+
+- yazdırılabilir kart
+- PNG indirme
+- link kopyalama
+
+## Sipariş durumları
+
+`PENDING` → `CONFIRMED` → `PREPARING` → `READY` → `SERVED` → `COMPLETED`  
+(`CANCELLED` ara adımlardan)
+
+Sipariş numarası biçimi: `#TE20260045`
+
+## NPM komutları
+
+| Komut | Açıklama |
+| --- | --- |
+| `npm run dev` | Geliştirme sunucusu |
+| `npm run build` | Production build |
+| `npm start` | Production sunucu |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest |
+| `npm run db:migrate` | Prisma migrate |
+| `npm run db:seed` | Seed |
+| `npm run db:studio` | Prisma Studio |
+
+## Güvenlik notları
+
+- Kullanıcı girdileri Zod ile doğrulanır
+- Sorgular Prisma üzerinden gider
+- Admin API’leri public değildir
+- Şifreler bcrypt ile hashlenir
+- Login / sipariş / rezervasyon / garson çağrısında basit rate limit vardır
+- Hassas sırlar yalnızca env üzerinden okunur

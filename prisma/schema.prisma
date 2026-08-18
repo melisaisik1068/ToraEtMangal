@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum WaiterRequestType {
+  WAITER
+  BILL
+  WATER
+  OTHER
+}
+
+enum WaiterRequestStatus {
+  PENDING
+  ACKNOWLEDGED
+  COMPLETED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String
+  ingredients String?
+  allergens   String?
+  price       Decimal     @db.Decimal(10, 2)
+  image       String
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  isAvailable Boolean     @default(true)
+  isFeatured  Boolean     @default(false)
+  hasDoneness Boolean     @default(false)
+  sortOrder   Int         @default(0)
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([categoryId])
+  @@index([isFeatured, isAvailable])
+}
+
+model Table {
+  id             String          @id @default(cuid())
+  number         Int             @unique
+  qrToken        String          @unique
+  isActive       Boolean         @default(true)
+  orders         Order[]
+  waiterRequests WaiterRequest[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model OrderSequence {
+  id       String @id @default("default")
+  year     Int
+  sequence Int    @default(0)
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  tableId       String?
+  table         Table?      @relation(fields: [tableId], references: [id])
+  status        OrderStatus @default(PENDING)
+  total         Decimal     @db.Decimal(10, 2)
+  note          String?
+  customerName  String?
+  customerPhone String?
+  items         OrderItem[]
+  reviews       Review[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([tableId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  note      String?
+  doneness  String?
+
+  @@index([orderId])
+}
+
+model Reservation {
+  id        String            @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  date      DateTime
+  time      String
+  guests    Int
+  note      String?
+  status    ReservationStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+model WaiterRequest {
+  id          String               @id @default(cuid())
+  tableId     String
+  table       Table                @relation(fields: [tableId], references: [id])
+  requestType WaiterRequestType
+  status      WaiterRequestStatus  @default(PENDING)
+  note        String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([tableId, status])
+  @@index([createdAt])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model RestaurantSettings {
+  id               String  @id @default("default")
+  name             String
+  phone            String
+  whatsapp         String
+  address          String
+  instagram        String
+  facebook         String  @default("")
+  workingHours     String
+  googleMapsUrl    String
+  logo             String
+  homepageTagline  String
+  aboutText        String
+}

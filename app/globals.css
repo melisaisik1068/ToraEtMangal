@@ -1,26 +1,95 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #1a1814;
+  --background-deep: #0f0e0c;
+  --background-elevated: #242220;
+  --foreground: #f8f2df;
+  --primary: #c5a059;
+  --primary-foreground: #0f0e0c;
+  --secondary: #f5eedc;
+  --accent: #c5a059;
+  --muted: #a8a095;
+  --cream: #f5eedc;
+  --cream-light: #fff8eb;
+  --border: rgba(197, 160, 89, 0.28);
+  --ring: #c5a059;
+  --destructive: #c45c4a;
+  --card: #1e1c18;
+  --gold: #c5a059;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-deep: var(--background-deep);
+  --color-background-elevated: var(--background-elevated);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-cream: var(--cream);
+  --color-cream-light: var(--cream-light);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-card: var(--card);
+  --color-gold: var(--gold);
+  --font-serif: var(--font-cormorant), ui-serif, Georgia, serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-script: var(--font-great-vibes), "Segoe Script", cursive;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background: var(--background-deep);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--gold) 40%, transparent);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.gold-border {
+  border: 1px solid var(--border);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
+
+  .print-card {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  aside,
+  .print-hidden {
+    display: none !important;
+  }
 }

@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tora-et-mangal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tora
+      POSTGRES_PASSWORD: tora
+      POSTGRES_DB: tora_et_mangal
+    ports:
+      - "5433:5432"
+    volumes:
+      - tora_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tora -d tora_et_mangal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tora_pgdata:
