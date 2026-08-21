@@ -55,9 +55,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background-deep lg:grid lg:grid-cols-[240px_1fr]">
+    <div className="min-h-screen bg-transparent lg:grid lg:grid-cols-[240px_1fr]">
       {/* Desktop sidebar */}
-      <aside className="print-hidden hidden border-r border-gold/15 lg:block">
+      <aside className="print-hidden hidden border-r border-cream/10 bg-[linear-gradient(180deg,rgba(26,69,53,0.45),rgba(10,24,18,0.85))] lg:block">
         <div className="flex items-center gap-3 px-4 py-4">
           <BrandLogo href="/admin" size={48} />
           <span className="text-xs uppercase tracking-[0.18em] text-gold">Yönetim</span>
@@ -92,7 +92,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="print-hidden sticky top-0 z-40 flex min-h-14 items-center justify-between border-b border-gold/15 bg-background-deep/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden">
+      <header className="print-hidden sticky top-0 z-40 flex min-h-14 items-center justify-between border-b border-cream/10 bg-[rgba(10,24,18,0.88)] px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl lg:hidden">
         <button
           type="button"
           aria-label="Menüyü aç"
@@ -160,7 +160,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom nav */}
       <nav
         aria-label="Admin alt menü"
-        className="print-hidden fixed inset-x-0 bottom-0 z-40 border-t border-gold/20 bg-background-deep/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        className="print-hidden fixed inset-x-0 bottom-0 z-40 border-t border-cream/15 bg-[linear-gradient(180deg,rgba(18,53,40,0.92),rgba(10,24,18,0.98))] pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
         <ul className="grid grid-cols-5">
           {PRIMARY.map((link) => {

@@ -92,8 +92,8 @@ export function ProductCard({ product, layout = "menu" }: ProductCardProps) {
   }
 
   return (
-    <article className="relative flex gap-3 rounded-2xl border border-gold/20 bg-card/80 p-3">
-      <Link href={`/product/${product.slug}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-white/5">
+    <article className="surface-panel relative flex gap-3 rounded-2xl p-3">
+      <Link href={`/product/${product.slug}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-[rgba(4,12,9,0.45)]">
         <ProductImage src={product.image} alt={product.name} sizes="96px" />
       </Link>
       <div className="min-w-0 flex-1 pr-12">
@@ -107,7 +107,7 @@ export function ProductCard({ product, layout = "menu" }: ProductCardProps) {
         type="button"
         onClick={add}
         aria-label={`${product.name} sepete ekle`}
-        className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full border border-gold text-gold active:scale-95"
+        className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full border border-cream/40 bg-gradient-to-b from-[var(--forest-lift)] to-[var(--forest-deep)] text-gold active:scale-95"
       >
         <Plus className="h-4 w-4" />
       </button>

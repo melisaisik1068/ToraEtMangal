@@ -8,12 +8,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        gold: "bg-gold text-primary-foreground hover:brightness-110",
-        cream: "bg-cream text-primary-foreground hover:bg-cream-light",
+        gold: "btn-brand hover:brightness-110",
+        cream: "btn-brand hover:brightness-105",
         outline:
-          "border border-gold/40 bg-transparent text-foreground hover:bg-gold/10",
-        ghost: "text-foreground hover:bg-white/5",
-        dark: "bg-background-deep text-foreground hover:bg-background",
+          "border border-cream/35 bg-[rgba(26,69,53,0.35)] text-cream backdrop-blur-sm hover:bg-cream/10",
+        ghost: "text-foreground hover:bg-cream/5",
+        dark: "bg-gradient-to-b from-[var(--forest-lift)] to-[var(--forest-deep)] text-cream hover:brightness-110",
       },
       size: {
         sm: "px-4 text-sm",

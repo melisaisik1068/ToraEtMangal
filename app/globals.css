@@ -1,22 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #1a1814;
-  --background-deep: #0f0e0c;
-  --background-elevated: #242220;
-  --foreground: #f8f2df;
-  --primary: #c5a059;
-  --primary-foreground: #0f0e0c;
-  --secondary: #f5eedc;
-  --accent: #c5a059;
-  --muted: #a8a095;
-  --cream: #f5eedc;
-  --cream-light: #fff8eb;
-  --border: rgba(197, 160, 89, 0.28);
-  --ring: #c5a059;
-  --destructive: #c45c4a;
-  --card: #1e1c18;
-  --gold: #c5a059;
+  /* Logo: derin orman yeşili + krem fildişi — soft değil, doygun geçişler */
+  --forest-ink: #040c09;
+  --forest-deep: #0a1812;
+  --forest-mid: #123528;
+  --forest-lift: #1a4535;
+  --forest-glow: #2f6b52;
+  --ember: #e4a84a;
+  --ember-deep: #c4842e;
+
+  --background: #123528;
+  --background-deep: #0a1812;
+  --background-elevated: #1a4535;
+  --foreground: #f6f0de;
+  --primary: #f3ead4;
+  --primary-foreground: #0a1812;
+  --secondary: #f6f0de;
+  --accent: #e4a84a;
+  --muted: #9eb5a8;
+  --cream: #f3ead4;
+  --cream-light: #fbf7eb;
+  --border: rgba(243, 234, 212, 0.22);
+  --ring: #e4a84a;
+  --destructive: #d45b4a;
+  --card: #14362a;
+  --gold: #e8d5a3;
+  --surface-sheen: linear-gradient(
+    145deg,
+    rgba(255, 248, 230, 0.08) 0%,
+    rgba(26, 69, 53, 0.35) 42%,
+    rgba(10, 24, 18, 0.9) 100%
+  );
+  --brand-wash: radial-gradient(
+      ellipse 110% 70% at 50% -15%,
+      rgba(47, 107, 82, 0.55),
+      transparent 58%
+    ),
+    radial-gradient(ellipse 70% 55% at 100% 30%, rgba(228, 168, 74, 0.12), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 0% 80%, rgba(20, 53, 42, 0.8), transparent 55%),
+    linear-gradient(168deg, #040c09 0%, #0f2a20 38%, #0a1812 72%, #06140f 100%);
 }
 
 @theme inline {
@@ -51,24 +74,53 @@ html {
 }
 
 body {
-  background: var(--background-deep);
+  background: var(--brand-wash);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
   overscroll-behavior-y: none;
+  min-height: 100dvh;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--gold) 40%, transparent);
+  background: color-mix(in srgb, var(--ember) 45%, transparent);
   color: var(--foreground);
 }
 
 :focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--ember);
   outline-offset: 3px;
 }
 
 .gold-border {
   border: 1px solid var(--border);
+}
+
+.surface-panel {
+  background: var(--surface-sheen);
+  border: 1px solid rgba(243, 234, 212, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 230, 0.06),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.btn-brand {
+  background: linear-gradient(135deg, #fbf7eb 0%, #f3ead4 45%, #e8d5a3 100%);
+  color: var(--primary-foreground);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 10px 28px rgba(228, 168, 74, 0.22);
+}
+
+.btn-brand:hover {
+  filter: brightness(1.05);
+}
+
+.text-brand-glow {
+  background: linear-gradient(120deg, #fbf7eb 10%, #e8d5a3 48%, #e4a84a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -81,6 +133,10 @@ body {
 }
 
 @media print {
+  body {
+    background: #fff !important;
+  }
+
   .print-hidden {
     display: none !important;
   }

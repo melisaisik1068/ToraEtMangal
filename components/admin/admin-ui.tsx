@@ -28,7 +28,7 @@ export function AdminCard({
   className?: string;
 }) {
   return (
-    <article className={cn("rounded-3xl border border-gold/15 bg-background p-4", className)}>
+    <article className={cn("surface-panel rounded-3xl p-4", className)}>
       {children}
     </article>
   );

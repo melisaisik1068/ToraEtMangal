@@ -12,7 +12,7 @@ export async function HomeContactBar() {
   ];
 
   return (
-    <section className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-gold/20 bg-background-deep/98 backdrop-blur">
+    <section className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-cream/15 bg-[linear-gradient(180deg,rgba(18,53,40,0.92),rgba(10,24,18,0.98))] pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
       <ul className="grid grid-cols-3">
         {items.map((item) => {
           const Icon = item.icon;
