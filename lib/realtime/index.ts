@@ -5,7 +5,8 @@
 export type LiveEvent =
   | { type: "order.created"; payload: { id: string; tableNumber?: number; total: string } }
   | { type: "order.updated"; payload: { id: string } }
-  | { type: "waiter.created"; payload: { id: string; tableNumber?: number } };
+  | { type: "waiter.created"; payload: { id: string; tableNumber?: number } }
+  | { type: "reservation.created"; payload: { id: string; name: string; guests: number } };
 
 export const LIVE_POLL_INTERVAL_MS = 5000;
 export const ALERT_BELL_MS = 10_000;
