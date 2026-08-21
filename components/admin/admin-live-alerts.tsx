@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { LIVE_POLL_INTERVAL_MS, playAlertBell } from "@/lib/realtime";
+import { ALERT_BELL_MS, LIVE_POLL_INTERVAL_MS, playAlertBell, stopAlertBell } from "@/lib/realtime";
 import { formatTL } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +40,8 @@ export function AdminLiveAlerts() {
   const knownOrders = useRef<Set<string>>(new Set());
   const knownRequests = useRef<Set<string>>(new Set());
   const primed = useRef(false);
+  const ringing = useRef(false);
+  const pendingCount = useRef(0);
 
   useEffect(() => {
     let ignore = false;
@@ -56,14 +58,19 @@ export function AdminLiveAlerts() {
 
       const nextOrders = (ordersData.orders ?? []) as OrderAlert[];
       const nextRequests = (requestsData.requests ?? []) as RequestAlert[];
+      const pendingOrders = nextOrders.filter((o) => o.status === "PENDING");
+      const pendingRequests = nextRequests.filter((r) => r.status === "PENDING");
+      const count = pendingOrders.length + pendingRequests.length;
+      pendingCount.current = count;
 
       if (primed.current) {
+        let shouldRing = false;
         for (const order of nextOrders) {
           if (!knownOrders.current.has(order.id) && order.status === "PENDING") {
             toast.message("Yeni sipariş", {
               description: `Masa ${order.tableNumber ?? "-"} · ${formatTL(order.total)}`,
             });
-            playAlertBell(5000);
+            shouldRing = true;
           }
         }
         for (const req of nextRequests) {
@@ -71,23 +78,42 @@ export function AdminLiveAlerts() {
             toast.message(typeLabel(req.requestType), {
               description: `Masa ${req.table.number}${req.note ? ` · ${req.note}` : ""}`,
             });
-            playAlertBell(5000);
+            shouldRing = true;
           }
+        }
+        if (shouldRing) {
+          ringing.current = true;
+          playAlertBell(ALERT_BELL_MS);
         }
       }
 
       knownOrders.current = new Set(nextOrders.map((o) => o.id));
       knownRequests.current = new Set(nextRequests.map((r) => r.id));
       primed.current = true;
-      setOrders(nextOrders.filter((o) => o.status === "PENDING"));
-      setRequests(nextRequests.filter((r) => r.status === "PENDING"));
+      setOrders(pendingOrders);
+      setRequests(pendingRequests);
+
+      if (count === 0) {
+        ringing.current = false;
+        stopAlertBell();
+      }
     };
 
     tick();
-    const timer = setInterval(tick, LIVE_POLL_INTERVAL_MS);
+    const pollTimer = setInterval(tick, LIVE_POLL_INTERVAL_MS);
+    // Bildirim kapanana kadar her 10 sn tekrar çal
+    const bellTimer = setInterval(() => {
+      if (pendingCount.current > 0) {
+        ringing.current = true;
+        playAlertBell(ALERT_BELL_MS);
+      }
+    }, ALERT_BELL_MS);
+
     return () => {
       ignore = true;
-      clearInterval(timer);
+      clearInterval(pollTimer);
+      clearInterval(bellTimer);
+      stopAlertBell();
     };
   }, []);
 
@@ -97,7 +123,11 @@ export function AdminLiveAlerts() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status: "COMPLETED" }),
     });
-    setRequests((rows) => rows.filter((row) => row.id !== id));
+    setRequests((rows) => {
+      const next = rows.filter((row) => row.id !== id);
+      if (next.length === 0 && orders.length === 0) stopAlertBell();
+      return next;
+    });
   }
 
   async function acknowledgeOrder(id: string) {
@@ -106,14 +136,20 @@ export function AdminLiveAlerts() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "CONFIRMED" }),
     });
-    setOrders((rows) => rows.filter((row) => row.id !== id));
+    setOrders((rows) => {
+      const next = rows.filter((row) => row.id !== id);
+      if (next.length === 0 && requests.length === 0) stopAlertBell();
+      return next;
+    });
   }
 
   if (orders.length === 0 && requests.length === 0) return null;
 
   return (
     <div className="print-hidden mb-4 space-y-3">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-gold">Aktif bildirimler</p>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-gold">
+        Aktif bildirimler · kapatılana kadar zil çalar
+      </p>
       {requests.map((req) => (
         <article
           key={req.id}

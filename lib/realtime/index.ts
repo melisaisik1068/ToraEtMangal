@@ -8,10 +8,19 @@ export type LiveEvent =
   | { type: "waiter.created"; payload: { id: string; tableNumber?: number } };
 
 export const LIVE_POLL_INTERVAL_MS = 5000;
+export const ALERT_BELL_MS = 10_000;
 
-/** Yeni sipariş / garson çağrısında ~5 saniye zil. */
-export function playAlertBell(durationMs = 5000) {
-  if (typeof window === "undefined") return;
+type BellHandle = { stop: () => void };
+
+let activeBell: BellHandle | null = null;
+
+/** Yeni sipariş / garson çağrısında zil. Varsayılan 10 sn. */
+export function playAlertBell(durationMs = ALERT_BELL_MS): BellHandle {
+  if (typeof window === "undefined") {
+    return { stop: () => undefined };
+  }
+
+  stopAlertBell();
 
   const AudioCtx =
     window.AudioContext ||
@@ -19,8 +28,10 @@ export function playAlertBell(durationMs = 5000) {
   const ctx = new AudioCtx();
   const started = ctx.currentTime;
   const end = started + durationMs / 1000;
+  let stopped = false;
 
   function beep(at: number, freq: number, len = 0.16) {
+    if (stopped) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
@@ -42,12 +53,30 @@ export function playAlertBell(durationMs = 5000) {
     i += 1;
   }
 
-  window.setTimeout(() => {
-    void ctx.close().catch(() => undefined);
+  const closer = window.setTimeout(() => {
+    if (!stopped) void ctx.close().catch(() => undefined);
+    if (activeBell === handle) activeBell = null;
   }, durationMs + 400);
+
+  const handle: BellHandle = {
+    stop: () => {
+      stopped = true;
+      window.clearTimeout(closer);
+      void ctx.close().catch(() => undefined);
+      if (activeBell === handle) activeBell = null;
+    },
+  };
+
+  activeBell = handle;
+  return handle;
+}
+
+export function stopAlertBell() {
+  activeBell?.stop();
+  activeBell = null;
 }
 
 /** Geriye uyumluluk */
 export function playNewOrderTone() {
-  playAlertBell(5000);
+  playAlertBell(ALERT_BELL_MS);
 }

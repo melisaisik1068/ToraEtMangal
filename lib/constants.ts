@@ -19,7 +19,7 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   PREPARING: "Hazırlanıyor",
   READY: "Servise Hazır",
   SERVED: "Servis Edildi",
-  COMPLETED: "Tamamlandı",
+  COMPLETED: "Ödemesi Tamamlandı",
   CANCELLED: "İptal",
 };
 

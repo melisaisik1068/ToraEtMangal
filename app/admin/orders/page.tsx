@@ -22,7 +22,8 @@ const TABS = [
   { key: "PENDING", label: "Yeni" },
   { key: "PREPARING", label: "Hazırlanıyor" },
   { key: "READY", label: "Servise Hazır" },
-  { key: "COMPLETED", label: "Tamamlandı" },
+  { key: "SERVED", label: "Servis Edildi" },
+  { key: "COMPLETED", label: "Ödemesi Tamamlandı" },
 ] as const;
 
 const NEXT: Record<string, string> = {
@@ -31,6 +32,14 @@ const NEXT: Record<string, string> = {
   PREPARING: "READY",
   READY: "SERVED",
   SERVED: "COMPLETED",
+};
+
+const NEXT_LABEL: Record<string, string> = {
+  PENDING: "Onayla",
+  CONFIRMED: "Hazırlanıyor",
+  PREPARING: "Servise hazır",
+  READY: "Servis edildi",
+  SERVED: "Ödeme tamamlandı",
 };
 
 export default function AdminOrdersPage() {
@@ -60,9 +69,7 @@ export default function AdminOrdersPage() {
     };
   }, []);
 
-  async function advance(order: OrderRow) {
-    const status = NEXT[order.status];
-    if (!status) return;
+  async function setStatus(order: OrderRow, status: string) {
     await fetch(`/api/admin/orders/${order.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -72,14 +79,13 @@ export default function AdminOrdersPage() {
   }
 
   const filtered = orders.filter((order) => {
-    if (tab === "COMPLETED") return ["SERVED", "COMPLETED"].includes(order.status);
     if (tab === "PREPARING") return ["CONFIRMED", "PREPARING"].includes(order.status);
     return order.status === tab;
   });
 
   return (
     <div>
-      <AdminPageHeader title="Siparişler" subtitle="Masa · ürün · not takibi" />
+      <AdminPageHeader title="Siparişler" subtitle="Masa · ürün · not · ödeme takibi" />
       <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
         {TABS.map((item) => (
           <button
@@ -120,13 +126,22 @@ export default function AdminOrdersPage() {
             <p className="mt-2 text-xs text-muted">
               {new Date(order.createdAt).toLocaleTimeString("tr-TR")}
             </p>
-            <div className="mt-4 flex gap-3 text-sm">
+            <div className="mt-4 flex flex-wrap gap-3 text-sm">
               <Link href={`/admin/orders/${order.id}`} className="text-gold">
                 Detay
               </Link>
               {NEXT[order.status] ? (
-                <button type="button" className="text-cream" onClick={() => advance(order)}>
-                  İlerlet
+                <button
+                  type="button"
+                  className={cn(
+                    "rounded-full px-3 py-1",
+                    order.status === "SERVED"
+                      ? "bg-gold font-semibold text-primary-foreground"
+                      : "border border-gold/40 text-cream",
+                  )}
+                  onClick={() => setStatus(order, NEXT[order.status])}
+                >
+                  {NEXT_LABEL[order.status] ?? "İlerlet"}
                 </button>
               ) : null}
             </div>
