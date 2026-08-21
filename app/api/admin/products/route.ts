@@ -43,3 +43,4 @@ export async function POST(request: Request) {
     console.error(err);
     return jsonError("Ürün kaydedilemedi. Görsel çok büyük olabilir veya kategori geçersiz.", 500);
   }
+}
