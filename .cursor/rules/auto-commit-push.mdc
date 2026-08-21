@@ -1,0 +1,14 @@
+---
+description: After every completed change set, commit and push without waiting for the user to ask.
+alwaysApply: true
+---
+
+# Auto commit + push
+
+After finishing a meaningful change set for this project:
+
+1. Commit all relevant files with a concise message focused on why.
+2. Push to `origin` on the current branch immediately.
+3. Do not wait for the user to say "commit" or "push".
+
+Follow the existing git safety protocol (no force push to main/master, no config changes, no secrets in commits). If push fails due to auth, report it and stop.
