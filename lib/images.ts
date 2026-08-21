@@ -8,7 +8,10 @@ const u = (id: string, extra = "") =>
 export const IMAGES = {
   hero: u("photo-1558030006-450675393462"),
   grillEmbers: u("photo-1529193591184-b1d58069ecdd"),
-  interior: u("photo-1414235077428-338989a2e8c0"),
+  interior: "/images/about/interior-1.jpg",
+  interior2: "/images/about/interior-2.jpg",
+  interior3: "/images/about/interior-3.jpg",
+  interior4: "/images/about/interior-4.jpg",
   tableSetting: u("photo-1517248135467-4c7edcad34c4"),
   qrStand: u("photo-1559339352-11d035aa65de"),
   social: [

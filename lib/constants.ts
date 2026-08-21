@@ -64,4 +64,9 @@ export const FEATURED_FALLBACK_SLUGS = [
   "kuzu-kaburga-kavurma",
 ];
 
-export const GALLERY = [IMAGES.interior, IMAGES.grillEmbers, IMAGES.hero, IMAGES.tableSetting];
+export const GALLERY = [
+  IMAGES.interior,
+  IMAGES.interior2,
+  IMAGES.interior3,
+  IMAGES.interior4,
+];
