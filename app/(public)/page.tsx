@@ -15,17 +15,19 @@ export default async function HomePage() {
       <FeatureCards />
       <section className="px-4 py-5">
         <p className="text-center text-xs uppercase tracking-[0.28em] text-gold">ÖNE ÇIKAN LEZZETLER</p>
-        <div className="no-scrollbar mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1">
-          {featured.map((product) => (
-            <ProductCard
-              key={product.id}
-              layout="featured"
-              product={{
-                ...product,
-                price: product.price.toString(),
-              }}
-            />
-          ))}
+        <div className="mt-4 flex justify-center overflow-x-auto pb-1">
+          <div className="no-scrollbar flex snap-x snap-mandatory gap-4 sm:gap-6">
+            {featured.map((product) => (
+              <ProductCard
+                key={product.id}
+                layout="featured"
+                product={{
+                  ...product,
+                  price: product.price.toString(),
+                }}
+              />
+            ))}
+          </div>
         </div>
       </section>
       <div className="h-16" />
