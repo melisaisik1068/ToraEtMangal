@@ -26,6 +26,7 @@ const TABS = [
   { key: "READY", label: "Servise Hazır" },
   { key: "SERVED", label: "Servis Edildi" },
   { key: "COMPLETED", label: "Ödemesi Tamamlandı" },
+  { key: "CANCELLED", label: "İptal" },
 ] as const;
 
 const STATUS_ACTIONS = [
@@ -34,6 +35,7 @@ const STATUS_ACTIONS = [
   { key: "READY", label: "Servise Hazır" },
   { key: "SERVED", label: "Servis Edildi" },
   { key: "COMPLETED", label: "Ödemesi Tamamlandı" },
+  { key: "CANCELLED", label: "İptal" },
 ] as const;
 
 function matchesTab(status: string, tab: string) {
@@ -158,8 +160,12 @@ export default function AdminOrdersPage() {
                       className={cn(
                         "min-h-10 rounded-full border px-3 text-xs",
                         active
-                          ? "border-gold bg-gold font-semibold text-primary-foreground"
-                          : "border-gold/30 text-cream hover:border-gold/60",
+                          ? status.key === "CANCELLED"
+                            ? "border-destructive bg-destructive/20 font-semibold text-destructive"
+                            : "border-gold bg-gold font-semibold text-primary-foreground"
+                          : status.key === "CANCELLED"
+                            ? "border-destructive/40 text-destructive"
+                            : "border-gold/30 text-cream hover:border-gold/60",
                       )}
                     >
                       {status.label}

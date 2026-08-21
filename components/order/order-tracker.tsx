@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 const STEP_ICONS = [ShoppingBag, ChefHat, Flame, CheckCircle2] as const;
 
 function statusHeadline(status: OrderStatusValue) {
+  if (status === "CANCELLED") return "Sipariş iptal edildi";
   if (status === "COMPLETED") return "Ödemeniz tamamlandı!";
   if (status === "SERVED") return "Afiyet olsun!";
   if (status === "READY") return "Siparişiniz hazır!";
