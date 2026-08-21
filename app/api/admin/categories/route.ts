@@ -7,7 +7,10 @@ import { categorySchema } from "@/lib/validations";
 export async function GET() {
   const { error } = await assertAdmin();
   if (error) return error;
-  const categories = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
+  const categories = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+  });
   return NextResponse.json({ categories });
 }
 

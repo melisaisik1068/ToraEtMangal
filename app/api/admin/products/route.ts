@@ -20,19 +20,26 @@ export async function POST(request: Request) {
   if (error) return error;
   const body = await request.json().catch(() => null);
   const parsed = productSchema.safeParse(body);
-  if (!parsed.success) return jsonError("Ürün bilgileri geçersiz.");
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return jsonError(issue?.message ? `Ürün bilgileri geçersiz: ${issue.path.join(".")} — ${issue.message}` : "Ürün bilgileri geçersiz.");
+  }
 
-  const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.name);
-  const product = await prisma.product.create({
-    data: {
-      ...parsed.data,
-      slug,
-      price: new Prisma.Decimal(parsed.data.price.toFixed(2)),
-      isAvailable: parsed.data.isAvailable ?? true,
-      isFeatured: parsed.data.isFeatured ?? false,
-      hasDoneness: parsed.data.hasDoneness ?? false,
-      sortOrder: parsed.data.sortOrder ?? 0,
-    },
-  });
-  return NextResponse.json({ product });
-}
+  try {
+    const slug = parsed.data.slug ? slugify(parsed.data.slug) : slugify(parsed.data.name);
+    const product = await prisma.product.create({
+      data: {
+        ...parsed.data,
+        slug,
+        price: new Prisma.Decimal(parsed.data.price.toFixed(2)),
+        isAvailable: parsed.data.isAvailable ?? true,
+        isFeatured: parsed.data.isFeatured ?? false,
+        hasDoneness: parsed.data.hasDoneness ?? false,
+        sortOrder: parsed.data.sortOrder ?? 0,
+      },
+    });
+    return NextResponse.json({ product });
+  } catch (err) {
+    console.error(err);
+    return jsonError("Ürün kaydedilemedi. Görsel çok büyük olabilir veya kategori geçersiz.", 500);
+  }
