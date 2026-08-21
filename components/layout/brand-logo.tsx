@@ -22,7 +22,7 @@ export function BrandLogo({
         alt={`${SITE_NAME} logosu`}
         width={size}
         height={size}
-        className="h-auto w-auto object-contain"
+        className="h-auto w-auto object-contain drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
         priority={priority}
       />
     </Link>
