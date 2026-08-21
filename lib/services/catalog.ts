@@ -1,14 +1,24 @@
 import { prisma } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/constants";
+import { ensureAbsoluteUrl } from "@/lib/utils";
 
 function withEnvOverrides<T extends Record<string, unknown>>(settings: T) {
+  const phone = process.env.NEXT_PUBLIC_RESTAURANT_PHONE?.trim() || String(settings.phone ?? "");
+  const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP?.trim() || String(settings.whatsapp ?? "");
+  const instagram = ensureAbsoluteUrl(
+    process.env.NEXT_PUBLIC_INSTAGRAM?.trim() || String(settings.instagram ?? ""),
+  );
+  const googleMapsUrl = ensureAbsoluteUrl(
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_URL?.trim() || String(settings.googleMapsUrl ?? ""),
+  );
+
   return {
     ...settings,
     name: process.env.NEXT_PUBLIC_RESTAURANT_NAME?.trim() || settings.name,
-    phone: process.env.NEXT_PUBLIC_RESTAURANT_PHONE?.trim() || settings.phone,
-    whatsapp: process.env.NEXT_PUBLIC_WHATSAPP?.trim() || settings.whatsapp,
-    instagram: process.env.NEXT_PUBLIC_INSTAGRAM?.trim() || settings.instagram,
-    googleMapsUrl: process.env.NEXT_PUBLIC_GOOGLE_MAPS_URL?.trim() || settings.googleMapsUrl,
+    phone,
+    whatsapp,
+    instagram,
+    googleMapsUrl,
   };
 }
 

@@ -44,3 +44,13 @@ export function whatsappLink(phone: string, message?: string) {
 export function telLink(phone: string) {
   return `tel:${phone.replace(/\s/g, "")}`;
 }
+
+/** Ensures external links work even if https:// was omitted in env/admin. */
+export function ensureAbsoluteUrl(value: string | null | undefined, fallback = "") {
+  const raw = (value ?? "").trim();
+  if (!raw) return fallback;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.startsWith("//")) {
+    return raw.startsWith("//") ? `https:${raw}` : raw;
+  }
+  return `https://${raw.replace(/^\/+/, "")}`;
+}
