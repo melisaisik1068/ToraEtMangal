@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertAdmin, jsonError } from "@/lib/api";
 import { prisma } from "@/lib/db";
-import { canTransition, type OrderStatusValue } from "@/lib/order-status";
 import { orderStatusSchema } from "@/lib/validations";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,10 +25,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const order = await prisma.order.findUnique({ where: { id } });
   if (!order) return jsonError("Sipariş bulunamadı.", 404);
-  if (!canTransition(order.status as OrderStatusValue, parsed.data.status)) {
-    return jsonError("Bu durum geçişi yapılamaz.");
-  }
 
+  // Admin panelinden herhangi bir duruma manuel geçiş serbest
   const updated = await prisma.order.update({
     where: { id },
     data: { status: parsed.data.status },

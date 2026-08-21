@@ -28,9 +28,9 @@ export function canTransition(from: OrderStatusValue, to: OrderStatusValue) {
 export function trackingIndex(status: OrderStatusValue) {
   if (status === "CANCELLED") return -1;
   if (status === "PENDING") return 0;
-  if (status === "CONFIRMED" || status === "PREPARING") return 1;
-  if (status === "READY") return 3;
-  if (status === "SERVED" || status === "COMPLETED") return 3;
+  if (status === "CONFIRMED") return 1;
+  if (status === "PREPARING") return 2;
+  if (status === "READY" || status === "SERVED" || status === "COMPLETED") return 3;
   return 0;
 }
 

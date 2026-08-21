@@ -13,13 +13,22 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/layout/brand-logo";
-import { TRACKING_STEPS } from "@/lib/constants";
+import { ORDER_STATUS_LABELS, TRACKING_STEPS } from "@/lib/constants";
 import { cookingActive, trackingIndex, type OrderStatusValue } from "@/lib/order-status";
 import { formatTL } from "@/lib/money";
 import { StarRating } from "@/components/reviews/star-rating";
 import { cn } from "@/lib/utils";
 
 const STEP_ICONS = [ShoppingBag, ChefHat, Flame, CheckCircle2] as const;
+
+function statusHeadline(status: OrderStatusValue) {
+  if (status === "COMPLETED") return "Ödemeniz tamamlandı!";
+  if (status === "SERVED") return "Afiyet olsun!";
+  if (status === "READY") return "Siparişiniz hazır!";
+  if (status === "PREPARING") return "Siparişiniz pişiriliyor!";
+  if (status === "CONFIRMED") return "Siparişiniz onaylandı!";
+  return "Siparişiniz alındı!";
+}
 
 type OrderView = {
   id: string;
@@ -48,7 +57,7 @@ export function OrderTracker({ initial }: { initial: OrderView }) {
         const data = await res.json();
         setOrder(data.order);
       }
-    }, 8000);
+    }, 3000);
     return () => clearInterval(timer);
   }, [order.id]);
 
@@ -78,17 +87,16 @@ export function OrderTracker({ initial }: { initial: OrderView }) {
       </div>
 
       <p className="text-center text-xs uppercase tracking-[0.28em] text-gold">SİPARİŞ TAKİBİ</p>
-      <h1 className="mt-2 text-center font-script text-4xl text-gold">
-        {order.status === "READY" || order.status === "SERVED"
-          ? "Siparişiniz hazır!"
-          : "Siparişin Hazırlanıyor!"}
-      </h1>
+      <h1 className="mt-2 text-center font-script text-4xl text-gold">{statusHeadline(order.status)}</h1>
+      <p className="mt-2 text-center text-sm text-cream">
+        Durum: {ORDER_STATUS_LABELS[order.status] ?? order.status}
+      </p>
 
       <ol className="relative mt-8 grid grid-cols-4 gap-2">
         <span className="absolute top-6 right-8 left-8 h-px bg-gold/25" />
         {TRACKING_STEPS.map((item, index) => {
           const active = cooking ? index === 2 : index === step;
-          const done = index < (cooking ? 2 : step);
+          const done = index < step || (cooking && index < 2) || (step === 3 && index <= 3 && !active && index < 3);
           const Icon = STEP_ICONS[index];
           return (
             <li key={item.key} className="relative text-center">
@@ -97,7 +105,7 @@ export function OrderTracker({ initial }: { initial: OrderView }) {
                   "mx-auto flex h-12 w-12 items-center justify-center rounded-full border bg-background-deep",
                   active
                     ? "border-gold bg-gold/20 text-gold shadow-[0_0_16px_rgba(197,160,89,0.35)]"
-                    : done
+                    : done || step === 3
                       ? "border-gold/60 bg-gold/10 text-gold"
                       : "border-gold/20 text-muted",
                 )}
