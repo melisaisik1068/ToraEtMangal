@@ -16,13 +16,18 @@ export function BrandLogo({
   priority?: boolean;
 }) {
   return (
-    <Link href={href} className={cn("inline-flex shrink-0", className)} aria-label={SITE_NAME}>
+    <Link
+      href={href}
+      className={cn("inline-flex shrink-0 items-center justify-center", className)}
+      aria-label={SITE_NAME}
+      style={{ width: size, height: size }}
+    >
       <Image
         src={LOGO_SRC}
         alt={`${SITE_NAME} logosu`}
         width={size}
         height={size}
-        className="h-auto w-auto object-contain drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
+        className="h-full w-full object-contain drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
         priority={priority}
       />
     </Link>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/input";
 import { BrandLogo } from "@/components/layout/brand-logo";
-import { useCartStore } from "@/store/cart";
+import { QR_SESSION_KEY, useCartStore } from "@/store/cart";
 
 export function QrWelcome({ tableNumber }: { tableNumber: number }) {
   const router = useRouter();
@@ -18,6 +18,11 @@ export function QrWelcome({ tableNumber }: { tableNumber: number }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    try {
+      sessionStorage.setItem(QR_SESSION_KEY, "1");
+    } catch {
+      // ignore
+    }
     setTable(tableNumber);
   }, [setTable, tableNumber]);
 

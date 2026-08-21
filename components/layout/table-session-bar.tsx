@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, UtensilsCrossed } from "lucide-react";
+import { Bell, LogOut, UtensilsCrossed } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
-import { useCartStore } from "@/store/cart";
+import { QR_SESSION_KEY, useCartStore } from "@/store/cart";
 
 export function TableSessionBar() {
   const pathname = usePathname();
   const router = useRouter();
   const tableNumber = useCartStore((s) => s.tableNumber);
+  const clearTable = useCartStore((s) => s.clearTable);
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,16 +45,26 @@ export function TableSessionBar() {
     }
   }
 
+  function leaveTable() {
+    try {
+      sessionStorage.removeItem(QR_SESSION_KEY);
+    } catch {
+      // ignore
+    }
+    clearTable();
+    toast.message("Masa bağlantısı kaldırıldı.");
+  }
+
   return (
     <>
-      <div className="sticky top-14 z-40 border-b border-gold/20 bg-background/95 px-4 py-2 backdrop-blur">
+      <div className="sticky top-14 z-40 border-b border-cream/15 bg-[rgba(10,24,18,0.94)] px-4 py-2 backdrop-blur-xl">
         <div className="mx-auto flex max-w-md items-center justify-between gap-2">
           <p className="text-xs uppercase tracking-[0.18em] text-gold">Masa {tableNumber}</p>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => router.push("/menu")}
-              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-gold/30 px-3 text-[10px] uppercase tracking-wide text-cream"
+              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-cream/30 px-3 text-[10px] uppercase tracking-wide text-cream"
             >
               <UtensilsCrossed className="h-3.5 w-3.5 text-gold" />
               Menü
@@ -65,6 +76,14 @@ export function TableSessionBar() {
             >
               <Bell className="h-3.5 w-3.5" />
               Garson
+            </button>
+            <button
+              type="button"
+              onClick={leaveTable}
+              aria-label="Masadan ayrıl"
+              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-cream/25 px-2.5 text-[10px] uppercase tracking-wide text-muted"
+            >
+              <LogOut className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
