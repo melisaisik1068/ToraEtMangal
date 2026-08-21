@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,15 +24,14 @@ export function QrTablesManager({ initialTables }: { initialTables: QrTable[] })
   const [open, setOpen] = useState(false);
   const [number, setNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<QrTable | null>(null);
 
   const suggested = (tables.reduce((max, t) => Math.max(max, t.number), 0) || 0) + 1;
 
   async function addTable() {
     setLoading(true);
-    const payload =
-      number.trim() === ""
-        ? {}
-        : { number: Number(number) };
+    const payload = number.trim() === "" ? {} : { number: Number(number) };
 
     const res = await fetch("/api/admin/tables", {
       method: "POST",
@@ -53,6 +52,28 @@ export function QrTablesManager({ initialTables }: { initialTables: QrTable[] })
     setOpen(false);
     setNumber("");
     toast.success(`Masa ${data.table.number} ve QR kodu eklendi.`);
+    router.refresh();
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeletingId(pendingDelete.id);
+    const res = await fetch("/api/admin/tables", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: pendingDelete.id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setDeletingId(null);
+
+    if (!res.ok) {
+      toast.error(data.error ?? "Masa silinemedi.");
+      return;
+    }
+
+    setTables((prev) => prev.filter((t) => t.id !== pendingDelete.id));
+    toast.success(`Masa ${pendingDelete.number} silindi.`);
+    setPendingDelete(null);
     router.refresh();
   }
 
@@ -90,7 +111,19 @@ export function QrTablesManager({ initialTables }: { initialTables: QrTable[] })
             key={table.id}
             className="rounded-3xl border border-gold/15 bg-background p-4 text-center"
           >
-            <p className="font-serif text-2xl">Masa {table.number}</p>
+            <div className="flex items-start justify-between gap-2">
+              <span className="w-10" />
+              <p className="font-serif text-2xl">Masa {table.number}</p>
+              <button
+                type="button"
+                aria-label={`Masa ${table.number} sil`}
+                disabled={deletingId === table.id}
+                onClick={() => setPendingDelete(table)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-destructive/40 text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={table.qrImage}
@@ -151,6 +184,28 @@ export function QrTablesManager({ initialTables }: { initialTables: QrTable[] })
           </Button>
           <Button className="flex-1" loading={loading} onClick={addTable}>
             Ekle
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(pendingDelete)}
+        onClose={() => setPendingDelete(null)}
+        title={pendingDelete ? `Masa ${pendingDelete.number} silinsin mi?` : "Masa sil"}
+      >
+        <p className="text-sm text-muted">
+          QR kodu ve masa kaydı kalıcı olarak silinir. Açık sipariş varken silinemez.
+        </p>
+        <div className="mt-6 flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={() => setPendingDelete(null)}>
+            Vazgeç
+          </Button>
+          <Button
+            className="flex-1 bg-destructive text-white hover:bg-destructive/90"
+            loading={Boolean(deletingId)}
+            onClick={confirmDelete}
+          >
+            Sil
           </Button>
         </div>
       </Dialog>

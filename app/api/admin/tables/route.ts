@@ -73,3 +73,32 @@ export async function POST(request: Request) {
     },
   });
 }
+
+const ACTIVE_ORDER_STATUSES = ["PENDING", "CONFIRMED", "PREPARING", "READY", "SERVED"] as const;
+
+export async function DELETE(request: Request) {
+  const { error } = await assertAdmin();
+  if (error) return error;
+
+  const body = await request.json().catch(() => null);
+  const id = body?.id as string | undefined;
+  if (!id) return jsonError("Masa id gerekli.");
+
+  const table = await prisma.table.findUnique({ where: { id } });
+  if (!table) return jsonError("Masa bulunamadı.", 404);
+
+  const activeOrders = await prisma.order.count({
+    where: { tableId: id, status: { in: [...ACTIVE_ORDER_STATUSES] } },
+  });
+  if (activeOrders > 0) {
+    return jsonError("Masada açık sipariş varken silinemez. Önce hesabı kapatın.", 409);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.waiterRequest.deleteMany({ where: { tableId: id } });
+    await tx.order.updateMany({ where: { tableId: id }, data: { tableId: null } });
+    await tx.table.delete({ where: { id } });
+  });
+
+  return NextResponse.json({ ok: true, deleted: { id: table.id, number: table.number } });
+}
