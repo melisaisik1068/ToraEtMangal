@@ -8,7 +8,6 @@ import { telLink, whatsappLink } from "@/lib/utils";
 const LINKS = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/menu", label: "Menü" },
-  { href: "/qr", label: "QR Menü" },
   { href: "/about", label: "Hakkımızda" },
   { href: "/reservation", label: "Rezervasyon" },
   { href: "/contact", label: "İletişim" },

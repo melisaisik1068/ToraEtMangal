@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { siteUrl } from "@/lib/utils";
 
 export default async function sitemap() {
-  const routes = ["", "/menu", "/about", "/contact", "/reservation", "/qr"].map((path) => ({
+  const routes = ["", "/menu", "/about", "/contact", "/reservation"].map((path) => ({
     url: siteUrl(path),
     lastModified: new Date(),
   }));

@@ -20,9 +20,11 @@ export async function GET() {
       total: order.total.toString(),
       createdAt: order.createdAt.toISOString(),
       tableNumber: order.table?.number ?? null,
+      note: order.note,
       items: order.items.map((item) => ({
         name: item.product.name,
         quantity: item.quantity,
+        note: item.note,
       })),
     })),
   });

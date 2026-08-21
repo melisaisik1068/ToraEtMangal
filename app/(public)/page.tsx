@@ -2,7 +2,6 @@ import { ProductCard } from "@/components/menu/product-card";
 import { FeatureCards } from "@/components/hero/feature-cards";
 import { Hero } from "@/components/hero/hero";
 import { HomeContactBar } from "@/components/hero/home-contact-bar";
-import { QrSection } from "@/components/qr/qr-section";
 import { getFeaturedProducts } from "@/lib/services/catalog";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +28,6 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-      <QrSection />
       <div className="h-16" />
       <HomeContactBar />
     </>

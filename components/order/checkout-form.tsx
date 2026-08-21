@@ -27,8 +27,7 @@ export function CheckoutForm() {
 
   async function submit() {
     if (!tableNumber) {
-      toast.error("Lütfen masanızdaki QR kodu okutun.");
-      router.push("/qr");
+      toast.error("Sipariş için masanızdaki QR kodu okutmanız gerekir.");
       return;
     }
     if (items.length === 0) {
@@ -80,7 +79,9 @@ export function CheckoutForm() {
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-gold/20 p-5">
-        <p className="text-sm text-gold">{tableNumber ? `Masa ${tableNumber}` : "Masa seçilmedi"}</p>
+        <p className="text-sm text-gold">
+          {tableNumber ? `Masa ${tableNumber}` : "Sipariş için masadaki QR kodu okutun"}
+        </p>
         <ul className="mt-4 space-y-3 text-sm">
           {items.map((item) => (
             <li key={item.key} className="flex justify-between gap-3">
@@ -100,8 +101,8 @@ export function CheckoutForm() {
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız (opsiyonel)" />
         <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon (opsiyonel)" />
         <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Sipariş notu" />
-        <Button className="w-full" loading={loading} onClick={submit}>
-          SİPARİŞİ GÖNDER
+        <Button className="w-full" loading={loading} disabled={!tableNumber} onClick={submit}>
+          {tableNumber ? "SİPARİŞİ GÖNDER" : "ÖNCE MASA QR OKUTUN"}
         </Button>
       </div>
     </div>

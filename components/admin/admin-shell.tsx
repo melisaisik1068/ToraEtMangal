@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { AdminLiveAlerts } from "@/components/admin/admin-live-alerts";
 import { cn } from "@/lib/utils";
 
 const PRIMARY = [
@@ -147,7 +148,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
-      <div className="pb-24 p-4 lg:pb-8 lg:p-8">{children}</div>
+      <div className="pb-24 p-4 lg:pb-8 lg:p-8">
+        <AdminLiveAlerts />
+        {children}
+      </div>
 
       {/* Mobile bottom nav */}
       <nav

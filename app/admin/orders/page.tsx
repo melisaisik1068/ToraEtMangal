@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import { AdminCard, AdminPageHeader } from "@/components/admin/admin-ui";
-import { LIVE_POLL_INTERVAL_MS, playNewOrderTone } from "@/lib/realtime";
+import { LIVE_POLL_INTERVAL_MS } from "@/lib/realtime";
 import { formatTL } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -14,8 +13,9 @@ type OrderRow = {
   status: string;
   total: string;
   createdAt: string;
+  note?: string | null;
   tableNumber: number | null;
-  items: { name: string; quantity: number }[];
+  items: { name: string; quantity: number; note?: string | null }[];
 };
 
 const TABS = [
@@ -36,29 +36,11 @@ const NEXT: Record<string, string> = {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("PENDING");
-  const known = useRef<Set<string>>(new Set());
-  const primed = useRef(false);
-
-  function applyOrders(next: OrderRow[]) {
-    if (primed.current) {
-      for (const order of next) {
-        if (!known.current.has(order.id) && order.status === "PENDING") {
-          toast.message("Yeni Sipariş", {
-            description: `Masa ${order.tableNumber ?? "-"} · ${formatTL(order.total)}`,
-          });
-          playNewOrderTone();
-        }
-      }
-    }
-    known.current = new Set(next.map((order) => order.id));
-    primed.current = true;
-    setOrders(next);
-  }
 
   function load() {
     fetch("/api/admin/orders")
       .then((res) => res.json())
-      .then((data) => applyOrders((data.orders ?? []) as OrderRow[]));
+      .then((data) => setOrders((data.orders ?? []) as OrderRow[]));
   }
 
   useEffect(() => {
@@ -67,7 +49,7 @@ export default function AdminOrdersPage() {
       fetch("/api/admin/orders")
         .then((res) => res.json())
         .then((data) => {
-          if (!ignore) applyOrders((data.orders ?? []) as OrderRow[]);
+          if (!ignore) setOrders((data.orders ?? []) as OrderRow[]);
         });
     };
     tick();
@@ -97,7 +79,7 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <AdminPageHeader title="Siparişler" subtitle="Canlı sipariş takibi" />
+      <AdminPageHeader title="Siparişler" subtitle="Masa · ürün · not takibi" />
       <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
         {TABS.map((item) => (
           <button
@@ -115,16 +97,28 @@ export default function AdminOrdersPage() {
       </div>
       <div className="space-y-3">
         {filtered.map((order) => (
-          <AdminCard key={order.id}>
+          <AdminCard
+            key={order.id}
+            className={order.status === "PENDING" ? "border-gold bg-gold/10" : undefined}
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-medium">#{order.orderNumber}</p>
-                <p className="text-sm text-muted">Masa {order.tableNumber ?? "-"}</p>
+                <p className="text-sm text-gold">Masa {order.tableNumber ?? "-"}</p>
               </div>
               <p className="text-gold">{formatTL(order.total)}</p>
             </div>
+            <ul className="mt-3 space-y-1 text-sm text-cream">
+              {order.items.map((item, index) => (
+                <li key={`${order.id}-${index}`}>
+                  {item.name} ×{item.quantity}
+                  {item.note ? <span className="text-muted"> · {item.note}</span> : null}
+                </li>
+              ))}
+            </ul>
+            {order.note ? <p className="mt-2 text-sm text-muted">Sipariş notu: {order.note}</p> : null}
             <p className="mt-2 text-xs text-muted">
-              {order.items.map((item) => `${item.name} ×${item.quantity}`).join(", ")}
+              {new Date(order.createdAt).toLocaleTimeString("tr-TR")}
             </p>
             <div className="mt-4 flex gap-3 text-sm">
               <Link href={`/admin/orders/${order.id}`} className="text-gold">
