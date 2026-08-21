@@ -15,6 +15,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:tables": "tsx scripts/ensure-tables.ts",
+    "db:sync-menu": "tsx scripts/sync-menu.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
     "postinstall": "prisma generate"

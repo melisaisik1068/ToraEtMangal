@@ -54,7 +54,7 @@ export const productSchema = z.object({
   ingredients: z.string().max(500).optional(),
   allergens: z.string().max(240).optional(),
   price: z.coerce.number().positive(),
-  image: z.string().min(1),
+  image: z.string().min(1).max(1_500_000),
   categoryId: z.string().min(1),
   isAvailable: z.boolean().optional(),
   isFeatured: z.boolean().optional(),

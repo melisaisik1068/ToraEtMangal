@@ -19,6 +19,14 @@ type ProductCardProps = {
   layout?: "featured" | "menu";
 };
 
+function ProductImage({ src, alt, sizes }: { src: string; alt: string; sizes: string }) {
+  if (src.startsWith("data:")) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" />;
+  }
+  return <Image src={src} alt={alt} fill className="object-cover" sizes={sizes} unoptimized={src.startsWith("/")} />;
+}
+
 export function ProductCard({ product, layout = "menu" }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
 
@@ -39,7 +47,7 @@ export function ProductCard({ product, layout = "menu" }: ProductCardProps) {
       <article className="w-[148px] shrink-0 snap-start text-center">
         <Link href={`/product/${product.slug}`} className="block">
           <div className="relative mx-auto h-[88px] w-[88px] overflow-hidden rounded-full border border-gold/30">
-            <Image src={product.image} alt={product.name} fill className="object-cover" sizes="88px" />
+            <ProductImage src={product.image} alt={product.name} sizes="88px" />
           </div>
           <h3 className="mt-3 line-clamp-2 min-h-10 text-sm leading-tight">{product.name}</h3>
           <p className="mt-1 text-sm text-gold">{formatTL(product.price)}</p>
@@ -58,7 +66,7 @@ export function ProductCard({ product, layout = "menu" }: ProductCardProps) {
   return (
     <article className="relative flex gap-3 rounded-2xl border border-gold/20 bg-card/80 p-3">
       <Link href={`/product/${product.slug}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
-        <Image src={product.image} alt={product.name} fill className="object-cover" sizes="96px" />
+        <ProductImage src={product.image} alt={product.name} sizes="96px" />
       </Link>
       <div className="min-w-0 flex-1 pr-12">
         <Link href={`/product/${product.slug}`}>

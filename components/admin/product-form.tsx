@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 
@@ -41,6 +43,7 @@ export function ProductForm({ product }: { product?: Product }) {
     },
   );
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/categories")
@@ -48,7 +51,27 @@ export function ProductForm({ product }: { product?: Product }) {
       .then((data) => setCategories(data.categories ?? []));
   }, []);
 
+  async function onFileChange(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    const body = new FormData();
+    body.append("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body });
+    const data = await res.json().catch(() => ({}));
+    setUploading(false);
+    if (!res.ok) {
+      toast.error(data.error ?? "Görsel yüklenemedi.");
+      return;
+    }
+    setForm((prev) => ({ ...prev, image: data.url }));
+    toast.success("Görsel eklendi.");
+  }
+
   async function save() {
+    if (!form.image) {
+      toast.error("Ürün görseli gerekli.");
+      return;
+    }
     setLoading(true);
     const payload = { ...form, price: Number(form.price) };
     const res = await fetch(product?.id ? `/api/admin/products/${product.id}` : "/api/admin/products", {
@@ -57,8 +80,16 @@ export function ProductForm({ product }: { product?: Product }) {
       body: JSON.stringify(payload),
     });
     setLoading(false);
-    if (res.ok) router.push("/admin/menu");
+    if (!res.ok) {
+      toast.error("Kayıt başarısız.");
+      return;
+    }
+    toast.success(product?.id ? "Ürün güncellendi." : "Ürün eklendi.");
+    router.push("/admin/menu");
   }
+
+  const preview = form.image;
+  const isData = preview.startsWith("data:");
 
   return (
     <div className="max-w-xl space-y-4">
@@ -71,13 +102,47 @@ export function ProductForm({ product }: { product?: Product }) {
         <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
       </div>
       <div>
-        <Label>Fiyat</Label>
-        <Input value={String(form.price)} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+        <Label>Fiyat (₺)</Label>
+        <Input
+          type="number"
+          min="0"
+          step="1"
+          value={String(form.price)}
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
+        />
       </div>
-      <div>
-        <Label>Görsel URL</Label>
-        <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
+
+      <div className="space-y-3 rounded-3xl border border-gold/15 p-4">
+        <Label>Ürün fotoğrafı</Label>
+        {preview ? (
+          <div className="relative mx-auto h-40 w-40 overflow-hidden rounded-2xl border border-gold/20">
+            {isData ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="Önizleme" className="h-full w-full object-cover" />
+            ) : (
+              <Image src={preview} alt="Önizleme" fill className="object-cover" sizes="160px" unoptimized />
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">Henüz görsel yok.</p>
+        )}
+        <Input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          disabled={uploading}
+          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+        />
+        <div>
+          <Label>veya görsel URL</Label>
+          <Input
+            value={isData ? "" : form.image}
+            placeholder="https://... veya /images/menu/..."
+            onChange={(e) => setForm({ ...form, image: e.target.value })}
+          />
+        </div>
+        {uploading ? <p className="text-xs text-gold">Yükleniyor...</p> : null}
       </div>
+
       <div>
         <Label>İçindekiler</Label>
         <Input value={form.ingredients ?? ""} onChange={(e) => setForm({ ...form, ingredients: e.target.value })} />
@@ -100,6 +165,14 @@ export function ProductForm({ product }: { product?: Product }) {
             </option>
           ))}
         </select>
+      </div>
+      <div>
+        <Label>Sıra</Label>
+        <Input
+          type="number"
+          value={String(form.sortOrder)}
+          onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) || 0 })}
+        />
       </div>
       <label className="flex min-h-11 items-center gap-2 text-sm">
         <input
@@ -125,8 +198,8 @@ export function ProductForm({ product }: { product?: Product }) {
         />
         Pişirme seçeneği
       </label>
-      <Button loading={loading} onClick={save}>
-        Kaydet
+      <Button className="min-h-12 w-full" loading={loading} onClick={save}>
+        {product?.id ? "Güncelle" : "Ürünü ekle"}
       </Button>
     </div>
   );

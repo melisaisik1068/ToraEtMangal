@@ -59,10 +59,10 @@ export const NAV_LINKS = [
 ] as const;
 
 export const FEATURED_FALLBACK_SLUGS = [
-  "tora-et-karisik-izgara",
-  "dana-antrikot",
-  "kuzu-pirzola",
   "adana-kebap",
+  "kuzu-pirzola",
+  "tora-kofte",
+  "kuzu-kaburga-kavurma",
 ];
 
 export const GALLERY = [IMAGES.interior, IMAGES.grillEmbers, IMAGES.hero, IMAGES.tableSetting];
