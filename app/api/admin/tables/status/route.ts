@@ -50,6 +50,7 @@ export async function GET() {
               items: current.items.map((item) => ({
                 name: item.product.name,
                 quantity: item.quantity,
+                status: item.status,
               })),
             }
           : null,

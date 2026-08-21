@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Great_Vibes, Manrope } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { SITE_NAME } from "@/lib/constants";
@@ -30,6 +30,13 @@ function metadataBaseUrl() {
     return new URL("http://localhost:3000");
   }
 }
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0f0e0c",
+};
 
 export const metadata: Metadata = {
   metadataBase: metadataBaseUrl(),

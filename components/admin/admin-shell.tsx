@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { AdminLiveAlerts } from "@/components/admin/admin-live-alerts";
+import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { cn } from "@/lib/utils";
 
 const PRIMARY = [
@@ -40,6 +41,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  useBodyScrollLock(drawerOpen);
 
   if (pathname.startsWith("/admin/login")) {
     return <>{children}</>;
@@ -88,7 +90,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="print-hidden sticky top-0 z-40 flex min-h-14 items-center justify-between border-b border-gold/15 bg-background-deep/95 px-4 backdrop-blur lg:hidden">
+      <header className="print-hidden sticky top-0 z-40 flex min-h-14 items-center justify-between border-b border-gold/15 bg-background-deep/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden">
         <button
           type="button"
           aria-label="Menüyü aç"
@@ -148,7 +150,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
-      <div className="pb-24 p-4 lg:pb-8 lg:p-8">
+      <div className="px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-4 lg:p-8 lg:pb-8">
         <AdminLiveAlerts />
         {children}
       </div>
@@ -156,7 +158,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom nav */}
       <nav
         aria-label="Admin alt menü"
-        className="print-hidden fixed inset-x-0 bottom-0 z-40 border-t border-gold/20 bg-background-deep/95 backdrop-blur lg:hidden"
+        className="print-hidden fixed inset-x-0 bottom-0 z-40 border-t border-gold/20 bg-background-deep/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
         <ul className="grid grid-cols-5">
           {PRIMARY.map((link) => {

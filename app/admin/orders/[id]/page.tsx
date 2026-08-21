@@ -16,6 +16,7 @@ type OrderItem = {
   quantity: number;
   unitPrice: string;
   note: string | null;
+  status: string;
   product: { id: string; name: string };
 };
 type Order = {
@@ -28,13 +29,17 @@ type Order = {
   items: OrderItem[];
 };
 
-const STATUS_ACTIONS = [
-  { key: "PENDING", label: "Sipariş Alındı" },
-  { key: "PREPARING", label: "Hazırlanıyor" },
-  { key: "READY", label: "Servise Hazır" },
-  { key: "SERVED", label: "Servis Edildi" },
+const ORDER_ACTIONS = [
   { key: "COMPLETED", label: "Ödemesi Tamamlandı" },
   { key: "CANCELLED", label: "Sipariş İptal" },
+] as const;
+
+const ITEM_STATUS_ACTIONS = [
+  { key: "PENDING", label: "Alındı" },
+  { key: "PREPARING", label: "Hazırlanıyor" },
+  { key: "READY", label: "Hazır" },
+  { key: "SERVED", label: "Servis" },
+  { key: "CANCELLED", label: "İptal" },
 ] as const;
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -115,9 +120,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       />
 
       <AdminCard>
-        <p className="mb-3 text-[10px] uppercase tracking-[0.16em] text-gold">Durum</p>
+        <p className="mb-3 text-[10px] uppercase tracking-[0.16em] text-gold">Sipariş (ödeme / iptal)</p>
         <div className="flex flex-wrap gap-2">
-          {STATUS_ACTIONS.map((status) => (
+          {ORDER_ACTIONS.map((status) => (
             <button
               key={status.key}
               type="button"
@@ -141,7 +146,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       </AdminCard>
 
       <AdminCard>
-        <h2 className="text-xs uppercase tracking-[0.16em] text-gold">Ürünler</h2>
+        <h2 className="text-xs uppercase tracking-[0.16em] text-gold">Ürünler (tek tek durum)</h2>
         <ul className="mt-4 space-y-3">
           {order.items.map((item) => (
             <li key={item.id} className="rounded-2xl border border-gold/15 p-3">
@@ -149,40 +154,70 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                 <div>
                   <p className="text-sm font-medium">{item.product.name}</p>
                   <p className="text-xs text-gold">{formatTL(item.unitPrice)} / adet</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-gold">
+                    {ORDER_STATUS_LABELS[item.status] ?? item.status}
+                  </p>
                 </div>
                 <p className="text-sm text-gold">
                   {formatTL(Number(item.unitPrice) * item.quantity)}
                 </p>
               </div>
               {!locked ? (
-                <div className="mt-3 flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30"
-                    onClick={() =>
-                      patch({ op: "setItemQty", itemId: item.id, quantity: item.quantity - 1 })
-                    }
-                  >
-                    −
-                  </button>
-                  <span className="min-w-8 text-center text-sm">{item.quantity}</span>
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30"
-                    onClick={() =>
-                      patch({ op: "setItemQty", itemId: item.id, quantity: item.quantity + 1 })
-                    }
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    className="ml-auto text-sm text-destructive"
-                    onClick={() => patch({ op: "removeItem", itemId: item.id })}
-                  >
-                    Çıkar
-                  </button>
-                </div>
+                <>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {ITEM_STATUS_ACTIONS.map((status) => (
+                      <button
+                        key={status.key}
+                        type="button"
+                        disabled={saving}
+                        onClick={() =>
+                          patch({ op: "itemStatus", itemId: item.id, status: status.key })
+                        }
+                        className={cn(
+                          "min-h-9 rounded-full border px-2.5 text-[11px]",
+                          item.status === status.key ||
+                            (status.key === "PREPARING" && item.status === "CONFIRMED")
+                            ? status.key === "CANCELLED"
+                              ? "border-destructive bg-destructive/20 font-semibold text-destructive"
+                              : "border-gold bg-gold font-semibold text-primary-foreground"
+                            : status.key === "CANCELLED"
+                              ? "border-destructive/40 text-destructive"
+                              : "border-gold/30 text-cream",
+                        )}
+                      >
+                        {status.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30"
+                      onClick={() =>
+                        patch({ op: "setItemQty", itemId: item.id, quantity: item.quantity - 1 })
+                      }
+                    >
+                      −
+                    </button>
+                    <span className="min-w-8 text-center text-sm">{item.quantity}</span>
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/30"
+                      onClick={() =>
+                        patch({ op: "setItemQty", itemId: item.id, quantity: item.quantity + 1 })
+                      }
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className="ml-auto text-sm text-destructive"
+                      onClick={() => patch({ op: "removeItem", itemId: item.id })}
+                    >
+                      Çıkar
+                    </button>
+                  </div>
+                </>
               ) : null}
             </li>
           ))}

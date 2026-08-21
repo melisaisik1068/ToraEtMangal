@@ -10,11 +10,13 @@ import {
   ShoppingBag,
   UtensilsCrossed,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { ORDER_STATUS_LABELS, TRACKING_STEPS } from "@/lib/constants";
 import { cookingActive, trackingIndex, type OrderStatusValue } from "@/lib/order-status";
+import { ORDER_TRACK_POLL_MS } from "@/lib/realtime";
+import { useLivePoll } from "@/lib/realtime/use-live-poll";
 import { formatTL } from "@/lib/money";
 import { StarRating } from "@/components/reviews/star-rating";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,7 @@ type OrderView = {
     id: string;
     quantity: number;
     unitPrice: string;
+    status?: OrderStatusValue;
     product: { name: string };
   }[];
 };
@@ -50,17 +53,18 @@ export function OrderTracker({ initial }: { initial: OrderView }) {
   const [order, setOrder] = useState(initial);
   const step = trackingIndex(order.status);
   const cooking = cookingActive(order.status);
+  const terminal = order.status === "COMPLETED" || order.status === "CANCELLED";
 
-  useEffect(() => {
-    const timer = setInterval(async () => {
-      const res = await fetch(`/api/orders/${order.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrder(data.order);
-      }
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [order.id]);
+  const refresh = useCallback(async () => {
+    if (terminal) return;
+    const res = await fetch(`/api/orders/${order.id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setOrder(data.order);
+    }
+  }, [order.id, terminal]);
+
+  useLivePoll(refresh, ORDER_TRACK_POLL_MS);
 
   const created = new Date(order.createdAt);
   const etaStart = new Date(created.getTime() + 20 * 60 * 1000);
@@ -123,10 +127,15 @@ export function OrderTracker({ initial }: { initial: OrderView }) {
         <h2 className="text-xs uppercase tracking-[0.2em] text-gold">SİPARİŞ BİLGİLERİ</h2>
         <ul className="mt-4 space-y-3 text-sm">
           {order.items.map((item) => (
-            <li key={item.id} className="flex justify-between gap-3">
-              <span className="text-cream">
-                {item.product.name} × {item.quantity}
-              </span>
+            <li key={item.id} className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-cream">
+                  {item.product.name} × {item.quantity}
+                </p>
+                <p className="mt-0.5 text-[11px] text-gold">
+                  {ORDER_STATUS_LABELS[item.status ?? order.status] ?? item.status ?? order.status}
+                </p>
+              </div>
               <span className="text-gold">{formatTL(item.unitPrice)}</span>
             </li>
           ))}

@@ -8,10 +8,12 @@ export function BrandLogo({
   className,
   href = "/",
   size = 72,
+  priority = false,
 }: {
   className?: string;
   href?: string;
   size?: number;
+  priority?: boolean;
 }) {
   return (
     <Link href={href} className={cn("inline-flex shrink-0", className)} aria-label={SITE_NAME}>
@@ -21,7 +23,7 @@ export function BrandLogo({
         width={size}
         height={size}
         className="h-auto w-auto object-contain"
-        priority
+        priority={priority}
       />
     </Link>
   );

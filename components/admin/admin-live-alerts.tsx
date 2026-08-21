@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ALERT_BELL_MS, LIVE_POLL_INTERVAL_MS, playAlertBell, stopAlertBell } from "@/lib/realtime";
+import { ALERT_BELL_MS, playAlertBell, stopAlertBell } from "@/lib/realtime";
+import { useLivePoll } from "@/lib/realtime/use-live-poll";
 import { formatTL } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -56,126 +57,116 @@ export function AdminLiveAlerts() {
   const primed = useRef(false);
   const pendingCount = useRef(0);
 
-  useEffect(() => {
-    let ignore = false;
+  const tick = useCallback(async () => {
+    const [ordersRes, requestsRes, reservationsRes] = await Promise.all([
+      fetch("/api/admin/orders?status=PENDING&limit=40"),
+      fetch("/api/admin/requests"),
+      fetch("/api/admin/reservations"),
+    ]);
+    if (!ordersRes.ok || !requestsRes.ok || !reservationsRes.ok) return;
 
-    const tick = async () => {
-      const [ordersRes, requestsRes, reservationsRes] = await Promise.all([
-        fetch("/api/admin/orders"),
-        fetch("/api/admin/requests"),
-        fetch("/api/admin/reservations"),
-      ]);
-      if (!ordersRes.ok || !requestsRes.ok || !reservationsRes.ok) return;
-      const ordersData = await ordersRes.json();
-      const requestsData = await requestsRes.json();
-      const reservationsData = await reservationsRes.json();
-      if (ignore) return;
+    const ordersData = await ordersRes.json();
+    const requestsData = await requestsRes.json();
+    const reservationsData = await reservationsRes.json();
 
-      const nextOrders = (ordersData.orders ?? []) as OrderAlert[];
-      const nextRequests = (requestsData.requests ?? []) as RequestAlert[];
-      const nextReservations = (reservationsData.reservations ?? []) as ReservationAlert[];
-      const pendingOrders = nextOrders.filter((o) => o.status === "PENDING");
-      const pendingRequests = nextRequests.filter((r) => r.status === "PENDING");
-      const pendingReservations = nextReservations.filter((r) => r.status === "PENDING");
-      const count = pendingOrders.length + pendingRequests.length + pendingReservations.length;
-      pendingCount.current = count;
+    const nextOrders = (ordersData.orders ?? []) as OrderAlert[];
+    const nextRequests = ((requestsData.requests ?? []) as RequestAlert[]).filter(
+      (r) => r.status === "PENDING",
+    );
+    const nextReservations = ((reservationsData.reservations ?? []) as ReservationAlert[]).filter(
+      (r) => r.status === "PENDING",
+    );
+    const count = nextOrders.length + nextRequests.length + nextReservations.length;
+    pendingCount.current = count;
 
-      if (primed.current) {
-        let shouldRing = false;
-        for (const order of nextOrders) {
-          if (!knownOrders.current.has(order.id) && order.status === "PENDING") {
-            toast.message("Yeni sipariş", {
-              description: `Masa ${order.tableNumber ?? "-"} · ${formatTL(order.total)}`,
-            });
-            shouldRing = true;
-          }
-        }
-        for (const req of nextRequests) {
-          if (!knownRequests.current.has(req.id) && req.status === "PENDING") {
-            toast.message(typeLabel(req.requestType), {
-              description: `Masa ${req.table.number}${req.note ? ` · ${req.note}` : ""}`,
-            });
-            shouldRing = true;
-          }
-        }
-        for (const reservation of nextReservations) {
-          if (!knownReservations.current.has(reservation.id) && reservation.status === "PENDING") {
-            toast.message("Yeni rezervasyon", {
-              description: `${reservation.name} · ${reservation.guests} kişi · ${reservation.time}`,
-            });
-            shouldRing = true;
-          }
-        }
-        if (shouldRing) {
-          playAlertBell(ALERT_BELL_MS);
+    if (primed.current) {
+      let shouldRing = false;
+      for (const order of nextOrders) {
+        if (!knownOrders.current.has(order.id)) {
+          toast.message("Yeni sipariş", {
+            description: `Masa ${order.tableNumber ?? "-"} · ${formatTL(order.total)}`,
+          });
+          shouldRing = true;
         }
       }
+      for (const req of nextRequests) {
+        if (!knownRequests.current.has(req.id)) {
+          toast.message(typeLabel(req.requestType), {
+            description: `Masa ${req.table.number}${req.note ? ` · ${req.note}` : ""}`,
+          });
+          shouldRing = true;
+        }
+      }
+      for (const reservation of nextReservations) {
+        if (!knownReservations.current.has(reservation.id)) {
+          toast.message("Yeni rezervasyon", {
+            description: `${reservation.name} · ${reservation.guests} kişi · ${reservation.time}`,
+          });
+          shouldRing = true;
+        }
+      }
+      if (shouldRing) playAlertBell(ALERT_BELL_MS);
+    }
 
-      knownOrders.current = new Set(nextOrders.map((o) => o.id));
-      knownRequests.current = new Set(nextRequests.map((r) => r.id));
-      knownReservations.current = new Set(nextReservations.map((r) => r.id));
-      primed.current = true;
-      setOrders(pendingOrders);
-      setRequests(pendingRequests);
-      setReservations(pendingReservations);
+    knownOrders.current = new Set(nextOrders.map((o) => o.id));
+    knownRequests.current = new Set(nextRequests.map((r) => r.id));
+    knownReservations.current = new Set(nextReservations.map((r) => r.id));
+    primed.current = true;
+    setOrders(nextOrders);
+    setRequests(nextRequests);
+    setReservations(nextReservations);
 
-      if (count === 0) stopAlertBell();
-    };
-
-    tick();
-    const pollTimer = setInterval(tick, LIVE_POLL_INTERVAL_MS);
-    const bellTimer = setInterval(() => {
-      if (pendingCount.current > 0) playAlertBell(ALERT_BELL_MS);
-    }, ALERT_BELL_MS);
-
-    return () => {
-      ignore = true;
-      clearInterval(pollTimer);
-      clearInterval(bellTimer);
-      stopAlertBell();
-    };
+    if (count === 0) stopAlertBell();
   }, []);
+
+  useLivePoll(tick);
+
+  useLivePoll(() => {
+    if (pendingCount.current > 0 && document.visibilityState === "visible") {
+      playAlertBell(ALERT_BELL_MS);
+    }
+  }, ALERT_BELL_MS);
 
   function maybeStopBell(nextOrders: number, nextRequests: number, nextReservations: number) {
     if (nextOrders + nextRequests + nextReservations === 0) stopAlertBell();
   }
 
   async function completeRequest(id: string) {
-    await fetch("/api/admin/requests", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status: "COMPLETED" }),
-    });
     setRequests((rows) => {
       const next = rows.filter((row) => row.id !== id);
       maybeStopBell(orders.length, next.length, reservations.length);
       return next;
     });
+    await fetch("/api/admin/requests", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "COMPLETED" }),
+    });
   }
 
   async function acknowledgeOrder(id: string) {
-    await fetch(`/api/admin/orders/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "CONFIRMED" }),
-    });
     setOrders((rows) => {
       const next = rows.filter((row) => row.id !== id);
       maybeStopBell(next.length, requests.length, reservations.length);
       return next;
     });
+    await fetch(`/api/admin/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "CONFIRMED" }),
+    });
   }
 
   async function confirmReservation(id: string) {
-    await fetch("/api/admin/reservations", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status: "CONFIRMED" }),
-    });
     setReservations((rows) => {
       const next = rows.filter((row) => row.id !== id);
       maybeStopBell(orders.length, requests.length, next.length);
       return next;
+    });
+    await fetch("/api/admin/reservations", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "CONFIRMED" }),
     });
   }
 

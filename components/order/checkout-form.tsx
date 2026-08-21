@@ -104,6 +104,11 @@ export function CheckoutForm() {
         <Button className="w-full" loading={loading} disabled={!tableNumber} onClick={submit}>
           {tableNumber ? "SİPARİŞİ GÖNDER" : "ÖNCE MASA QR OKUTUN"}
         </Button>
+        {!tableNumber ? (
+          <p className="text-center text-sm text-muted">
+            Masadaki QR kodu okutunca sipariş masanıza bağlanır.
+          </p>
+        ) : null}
       </div>
     </div>
   );

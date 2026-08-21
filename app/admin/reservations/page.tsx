@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { AdminCard, AdminPageHeader } from "@/components/admin/admin-ui";
-import { LIVE_POLL_INTERVAL_MS } from "@/lib/realtime";
+import { useLivePoll } from "@/lib/realtime/use-live-poll";
 import { cn } from "@/lib/utils";
 
 type Reservation = {
@@ -21,28 +21,13 @@ type Reservation = {
 export default function ReservationsPage() {
   const [rows, setRows] = useState<Reservation[]>([]);
 
-  function load() {
-    fetch("/api/admin/reservations")
-      .then((res) => res.json())
-      .then((data) => setRows(data.reservations ?? []));
-  }
-
-  useEffect(() => {
-    let ignore = false;
-    const tick = () => {
-      fetch("/api/admin/reservations")
-        .then((res) => res.json())
-        .then((data) => {
-          if (!ignore) setRows(data.reservations ?? []);
-        });
-    };
-    tick();
-    const timer = setInterval(tick, LIVE_POLL_INTERVAL_MS);
-    return () => {
-      ignore = true;
-      clearInterval(timer);
-    };
+  const load = useCallback(async () => {
+    const res = await fetch("/api/admin/reservations");
+    const data = await res.json();
+    setRows(data.reservations ?? []);
   }, []);
+
+  useLivePoll(load);
 
   const pending = rows.filter((row) => row.status === "PENDING");
   const others = rows.filter((row) => row.status !== "PENDING");

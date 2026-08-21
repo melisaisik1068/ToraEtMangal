@@ -21,17 +21,53 @@ export function CartDrawer() {
   const remove = useCartStore((s) => s.remove);
   const totals = getCartTotals(items);
 
+  const footer =
+    items.length === 0 ? undefined : (
+      <div className="space-y-3">
+        <div className="flex justify-between text-sm">
+          <span>Ara toplam</span>
+          <span>{formatTLFromKurus(totals.subtotalKurus)}</span>
+        </div>
+        <div className="flex justify-between font-medium">
+          <span>Toplam</span>
+          <span className="text-gold">{formatTLFromKurus(totals.totalKurus)}</span>
+        </div>
+        <Button
+          className="min-h-12 w-full"
+          onClick={() => {
+            setOpen(false);
+            router.push("/order");
+          }}
+        >
+          SİPARİŞİ TAMAMLA
+        </Button>
+        <Link
+          href="/menu"
+          className="block pb-1 text-center text-sm text-muted"
+          onClick={() => setOpen(false)}
+        >
+          Menüye dön
+        </Link>
+      </div>
+    );
+
   return (
-    <Sheet open={open} onClose={() => setOpen(false)} title="Sepetim" side="right">
+    <Sheet open={open} onClose={() => setOpen(false)} title="Sepetim" side="right" footer={footer}>
       {items.length === 0 ? (
         <div className="py-10 text-center">
           <p className="font-serif text-2xl">Sepetiniz henüz boş.</p>
-          <Button className="mt-6" onClick={() => { setOpen(false); router.push("/menu"); }}>
+          <Button
+            className="mt-6"
+            onClick={() => {
+              setOpen(false);
+              router.push("/menu");
+            }}
+          >
             Menüyü Keşfet
           </Button>
         </div>
       ) : (
-        <div className="flex min-h-[70vh] flex-col">
+        <div>
           {tableNumber ? (
             <p className="mb-4 rounded-2xl border border-gold/20 px-3 py-2 text-sm text-gold">
               Masa {tableNumber}
@@ -41,61 +77,56 @@ export function CartDrawer() {
               Masa QR kodunu okutursanız siparişiniz masanıza bağlanır.
             </p>
           )}
-          <ul className="space-y-4">
+          <ul className="space-y-3">
             {items.map((item) => (
               <li key={item.key} className="flex gap-3 rounded-2xl border border-gold/15 p-3">
-                <div className="relative h-16 w-16 overflow-hidden rounded-xl">
-                  <Image src={item.image} alt={item.name} fill className="object-cover" sizes="64px" />
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/5">
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                    unoptimized={item.image.startsWith("data:")}
+                  />
                 </div>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{item.name}</p>
                   <p className="text-gold">{formatTLFromKurus(item.unitKurus)}</p>
                   <div className="mt-2 flex items-center gap-2">
-                    <button type="button" className="h-11 w-11" aria-label="Azalt" onClick={() => decrement(item.key)}>
-                      <Minus className="mx-auto h-4 w-4" />
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/25"
+                      aria-label="Azalt"
+                      onClick={() => decrement(item.key)}
+                    >
+                      <Minus className="h-4 w-4" />
                     </button>
-                    <span>{item.quantity}</span>
-                    <button type="button" className="h-11 w-11" aria-label="Artır" onClick={() => increment(item.key)}>
-                      <Plus className="mx-auto h-4 w-4" />
+                    <span className="min-w-6 text-center">{item.quantity}</span>
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/25"
+                      aria-label="Artır"
+                      onClick={() => increment(item.key)}
+                    >
+                      <Plus className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
-                      className="ml-auto h-11 w-11 text-destructive"
+                      className="ml-auto flex h-10 w-10 items-center justify-center text-destructive"
                       aria-label="Sil"
                       onClick={() => {
                         remove(item.key);
                         toast("Ürün sepetten çıkarıldı.");
                       }}
                     >
-                      <Trash2 className="mx-auto h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
-          <div className="mt-auto space-y-3 border-t border-gold/15 pt-5">
-            <div className="flex justify-between text-sm">
-              <span>Ara toplam</span>
-              <span>{formatTLFromKurus(totals.subtotalKurus)}</span>
-            </div>
-            <div className="flex justify-between font-medium">
-              <span>Toplam</span>
-              <span className="text-gold">{formatTLFromKurus(totals.totalKurus)}</span>
-            </div>
-            <Button
-              className="w-full"
-              onClick={() => {
-                setOpen(false);
-                router.push("/order");
-              }}
-            >
-              SİPARİŞİ TAMAMLA
-            </Button>
-            <Link href="/menu" className="block text-center text-sm text-muted" onClick={() => setOpen(false)}>
-              Menüye dön
-            </Link>
-          </div>
         </div>
       )}
     </Sheet>

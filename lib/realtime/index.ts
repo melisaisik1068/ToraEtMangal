@@ -8,14 +8,17 @@ export type LiveEvent =
   | { type: "waiter.created"; payload: { id: string; tableNumber?: number } }
   | { type: "reservation.created"; payload: { id: string; name: string; guests: number } };
 
-export const LIVE_POLL_INTERVAL_MS = 5000;
-export const ALERT_BELL_MS = 10_000;
+/** Canlı listeler — sekme görünürken; gizliyken durur */
+export const LIVE_POLL_INTERVAL_MS = 10_000;
+/** Müşteri sipariş takibi */
+export const ORDER_TRACK_POLL_MS = 5_000;
+export const ALERT_BELL_MS = 12_000;
 
 type BellHandle = { stop: () => void };
 
 let activeBell: BellHandle | null = null;
 
-/** Yeni sipariş / garson çağrısında zil. Varsayılan 10 sn. */
+/** Yeni sipariş / garson çağrısında zil. */
 export function playAlertBell(durationMs = ALERT_BELL_MS): BellHandle {
   if (typeof window === "undefined") {
     return { stop: () => undefined };
@@ -38,7 +41,7 @@ export function playAlertBell(durationMs = ALERT_BELL_MS): BellHandle {
     osc.type = "sine";
     osc.frequency.value = freq;
     gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(0.12, at + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.1, at + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.0001, at + len);
     osc.connect(gain);
     gain.connect(ctx.destination);

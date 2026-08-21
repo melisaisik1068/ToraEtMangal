@@ -38,7 +38,7 @@ export function Navbar() {
         <div className="grid h-16 grid-cols-3 items-center px-4">
           <span />
           <div className="flex justify-center">
-            <BrandLogo size={64} />
+            <BrandLogo size={64} priority />
           </div>
           <div className="flex justify-end">
             <button

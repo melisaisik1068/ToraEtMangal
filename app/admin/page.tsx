@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { AdminCard, AdminPageHeader } from "@/components/admin/admin-ui";
+import { useLivePoll } from "@/lib/realtime/use-live-poll";
 import { formatTL } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -48,17 +49,13 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [period, setPeriod] = useState<(typeof PERIODS)[number]["key"]>("day");
 
-  useEffect(() => {
-    fetch("/api/admin/stats")
-      .then((res) => res.json())
-      .then(setStats);
-    const timer = setInterval(() => {
-      fetch("/api/admin/stats")
-        .then((res) => res.json())
-        .then(setStats);
-    }, 15000);
-    return () => clearInterval(timer);
+  const load = useCallback(async () => {
+    const res = await fetch("/api/admin/stats");
+    const data = await res.json();
+    setStats(data);
   }, []);
+
+  useLivePoll(load, 20_000);
 
   const summary = stats?.summary[period];
 

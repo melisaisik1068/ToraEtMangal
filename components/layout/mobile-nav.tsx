@@ -3,6 +3,7 @@
 import { ClipboardList, Home, Phone, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCartUi } from "@/components/cart/cart-provider";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -14,12 +15,13 @@ const ITEMS = [
 
 export function MobileNav() {
   const pathname = usePathname();
-  if (pathname === "/") return null;
+  const { open: cartOpen } = useCartUi();
+  if (pathname === "/" || cartOpen) return null;
 
   return (
     <nav
       aria-label="Alt gezinme"
-      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md border-t border-gold/20 bg-background-deep/98 backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md border-t border-gold/20 bg-background-deep/98 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
       <ul className="grid grid-cols-4">
         {ITEMS.map((item) => {

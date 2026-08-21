@@ -9,12 +9,15 @@ import { getCartTotals, useCartStore } from "@/store/cart";
 export function StickyCartBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { setOpen } = useCartUi();
+  const { open: cartOpen, setOpen } = useCartUi();
   const items = useCartStore((s) => s.items);
   const totals = getCartTotals(items);
 
+  if (cartOpen) return null;
   if (totals.quantity === 0) return null;
-  if (pathname === "/" || pathname.startsWith("/admin") || pathname.startsWith("/order/")) return null;
+  if (pathname === "/" || pathname.startsWith("/admin") || pathname === "/order" || pathname.startsWith("/order/")) {
+    return null;
+  }
 
   return (
     <button
@@ -26,7 +29,7 @@ export function StickyCartBar() {
         }
         setOpen(true);
       }}
-      className="fixed inset-x-0 bottom-14 z-40 mx-auto flex min-h-12 max-w-md items-center justify-between bg-cream px-5 text-sm font-semibold text-primary-foreground shadow-lg"
+      className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex min-h-12 max-w-md items-center justify-between bg-cream px-5 text-sm font-semibold text-primary-foreground shadow-lg"
       aria-label={`Sepetim, ${totals.quantity} ürün, ${formatTLFromKurus(totals.totalKurus)}`}
     >
       <span>Sepetim ({totals.quantity})</span>

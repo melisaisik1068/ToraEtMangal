@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { AdminCard, AdminPageHeader } from "@/components/admin/admin-ui";
-import { LIVE_POLL_INTERVAL_MS } from "@/lib/realtime";
+import { useLivePoll } from "@/lib/realtime/use-live-poll";
 
 type RequestRow = {
   id: string;
@@ -23,28 +23,13 @@ function typeLabel(type: string) {
 export default function RequestsPage() {
   const [rows, setRows] = useState<RequestRow[]>([]);
 
-  function load() {
-    fetch("/api/admin/requests")
-      .then((res) => res.json())
-      .then((data) => setRows((data.requests ?? []) as RequestRow[]));
-  }
-
-  useEffect(() => {
-    let ignore = false;
-    const tick = () => {
-      fetch("/api/admin/requests")
-        .then((res) => res.json())
-        .then((data) => {
-          if (!ignore) setRows((data.requests ?? []) as RequestRow[]);
-        });
-    };
-    tick();
-    const timer = setInterval(tick, LIVE_POLL_INTERVAL_MS);
-    return () => {
-      ignore = true;
-      clearInterval(timer);
-    };
+  const load = useCallback(async () => {
+    const res = await fetch("/api/admin/requests");
+    const data = await res.json();
+    setRows((data.requests ?? []) as RequestRow[]);
   }, []);
+
+  useLivePoll(load);
 
   const pending = rows.filter((row) => row.status === "PENDING");
   const done = rows.filter((row) => row.status !== "PENDING");
@@ -69,12 +54,14 @@ export default function RequestsPage() {
                 type="button"
                 className="min-h-11 shrink-0 rounded-full bg-gold px-4 text-sm font-semibold text-primary-foreground"
                 onClick={async () => {
+                  setRows((prev) =>
+                    prev.map((r) => (r.id === row.id ? { ...r, status: "COMPLETED" } : r)),
+                  );
                   await fetch("/api/admin/requests", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ id: row.id, status: "COMPLETED" }),
                   });
-                  load();
                 }}
               >
                 Tamamla

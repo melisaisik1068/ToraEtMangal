@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/menu/product-card";
 import { EmptyState } from "@/components/ui/states";
 import { getActiveCategories, getMenu } from "@/lib/services/catalog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function CategoryMenuPage({
   params,
@@ -20,7 +20,7 @@ export default async function CategoryMenuPage({
   const products = await getMenu({ categorySlug: category });
 
   return (
-    <div className="px-4 pb-28 pt-3">
+    <div className="px-4 pb-[calc(8.5rem+env(safe-area-inset-bottom))] pt-3">
       <MenuHeader backHref="/menu" />
       <h1 className="mb-4 text-center font-serif text-2xl tracking-wide">MENÜ</h1>
       <MenuSearch categories={categories} />

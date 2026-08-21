@@ -4,7 +4,7 @@ import { MenuHeader } from "@/components/layout/menu-header";
 import { ProductPurchase } from "@/components/product/product-purchase";
 import { getProductBySlug } from "@/lib/services/catalog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -12,17 +12,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   if (!product) notFound();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-28 pt-4">
+    <div className="mx-auto max-w-5xl px-4 pb-[calc(8.5rem+env(safe-area-inset-bottom))] pt-4">
       <MenuHeader backHref="/menu" />
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-[2rem]">
+        <div className="relative aspect-square overflow-hidden rounded-[2rem] bg-white/5">
           <Image
             src={product.image}
             alt={product.name}
             fill
+            priority
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
-            unoptimized={product.image.startsWith("/") || product.image.startsWith("data:")}
+            unoptimized={product.image.startsWith("data:")}
           />
         </div>
         <div>

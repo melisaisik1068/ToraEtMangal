@@ -3,19 +3,27 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { assertAdmin, jsonError } from "@/lib/api";
 import { prisma } from "@/lib/db";
+import { deriveOrderStatusFromItems } from "@/lib/order-item-status";
+
+const statuses = [
+  "PENDING",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+  "SERVED",
+  "COMPLETED",
+  "CANCELLED",
+] as const;
 
 const patchSchema = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("status"),
-    status: z.enum([
-      "PENDING",
-      "CONFIRMED",
-      "PREPARING",
-      "READY",
-      "SERVED",
-      "COMPLETED",
-      "CANCELLED",
-    ]),
+    status: z.enum(statuses),
+  }),
+  z.object({
+    op: z.literal("itemStatus"),
+    itemId: z.string().min(1),
+    status: z.enum(["PENDING", "CONFIRMED", "PREPARING", "READY", "SERVED", "CANCELLED"]),
   }),
   z.object({
     op: z.literal("addItem"),
@@ -48,12 +56,32 @@ async function loadOrder(id: string) {
 async function recalcTotal(orderId: string) {
   const items = await prisma.orderItem.findMany({ where: { orderId } });
   const total = items.reduce(
-    (sum, item) => sum + Number(item.unitPrice) * item.quantity,
+    (sum, item) =>
+      item.status === "CANCELLED" ? sum : sum + Number(item.unitPrice) * item.quantity,
     0,
   );
   return prisma.order.update({
     where: { id: orderId },
     data: { total: new Prisma.Decimal(total.toFixed(2)) },
+    include: { items: { include: { product: true } }, table: true },
+  });
+}
+
+async function syncOrderStatusFromItems(orderId: string, currentStatus: string) {
+  const items = await prisma.orderItem.findMany({
+    where: { orderId },
+    select: { status: true },
+  });
+  const next = deriveOrderStatusFromItems(
+    items,
+    currentStatus as Parameters<typeof deriveOrderStatusFromItems>[1],
+  );
+  if (next === currentStatus) {
+    return loadOrder(orderId);
+  }
+  return prisma.order.update({
+    where: { id: orderId },
+    data: { status: next },
     include: { items: { include: { product: true } }, table: true },
   });
 }
@@ -94,6 +122,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   switch (parsed.data.op) {
     case "status": {
+      if (parsed.data.status === "COMPLETED" || parsed.data.status === "CANCELLED") {
+        const itemStatus = parsed.data.status === "CANCELLED" ? "CANCELLED" : "SERVED";
+        await prisma.orderItem.updateMany({
+          where: {
+            orderId: id,
+            ...(parsed.data.status === "COMPLETED"
+              ? { status: { not: "CANCELLED" } }
+              : {}),
+          },
+          data: { status: itemStatus },
+        });
+      }
       const order = await prisma.order.update({
         where: { id },
         data: { status: parsed.data.status },
@@ -101,11 +141,33 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       });
       return NextResponse.json({ order });
     }
+    case "itemStatus": {
+      const { itemId, status: itemStatus } = parsed.data;
+      const item = existing.items.find((row) => row.id === itemId);
+      if (!item) return jsonError("Ürün kalemi bulunamadı.", 404);
+      await prisma.orderItem.update({
+        where: { id: itemId },
+        data: { status: itemStatus },
+      });
+      const order =
+        itemStatus === "CANCELLED"
+          ? await recalcTotal(id).then(async (updated) => {
+              const synced = await syncOrderStatusFromItems(id, updated.status);
+              return synced ?? updated;
+            })
+          : await syncOrderStatusFromItems(id, existing.status);
+      return NextResponse.json({ order });
+    }
     case "addItem": {
       const product = await prisma.product.findUnique({ where: { id: parsed.data.productId } });
       if (!product) return jsonError("Ürün bulunamadı.", 404);
       const same = existing.items.find(
-        (item) => item.productId === product.id && !item.note && !item.doneness,
+        (item) =>
+          item.productId === product.id &&
+          !item.note &&
+          !item.doneness &&
+          item.status !== "CANCELLED" &&
+          item.status !== "SERVED",
       );
       if (same) {
         await prisma.orderItem.update({
@@ -120,11 +182,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             quantity: parsed.data.quantity,
             unitPrice: product.price,
             note: parsed.data.note,
+            status: "PENDING",
           },
         });
       }
       const order = await recalcTotal(id);
-      return NextResponse.json({ order });
+      const synced = await syncOrderStatusFromItems(id, order.status);
+      return NextResponse.json({ order: synced ?? order });
     }
     case "setItemQty": {
       if (parsed.data.quantity === 0) {
@@ -136,12 +200,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         });
       }
       const order = await recalcTotal(id);
-      return NextResponse.json({ order });
+      const synced = await syncOrderStatusFromItems(id, order.status);
+      return NextResponse.json({ order: synced ?? order });
     }
     case "removeItem": {
       await prisma.orderItem.delete({ where: { id: parsed.data.itemId } });
       const order = await recalcTotal(id);
-      return NextResponse.json({ order });
+      const synced = await syncOrderStatusFromItems(id, order.status);
+      return NextResponse.json({ order: synced ?? order });
     }
     case "note": {
       const order = await prisma.order.update({

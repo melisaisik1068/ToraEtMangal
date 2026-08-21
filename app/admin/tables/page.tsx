@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { AdminCard, AdminPageHeader } from "@/components/admin/admin-ui";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
-import { LIVE_POLL_INTERVAL_MS } from "@/lib/realtime";
+import { useLivePoll } from "@/lib/realtime/use-live-poll";
 import { formatTL } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ type TableStatus = {
     total: string;
     note: string | null;
     createdAt: string;
-    items: { name: string; quantity: number }[];
+    items: { name: string; quantity: number; status: string }[];
   };
 };
 
@@ -39,37 +39,33 @@ export default function TablesPage() {
   const [tables, setTables] = useState<TableStatus[]>([]);
   const [filter, setFilter] = useState<"all" | "busy" | "empty">("all");
 
-  function load() {
-    fetch("/api/admin/tables/status")
-      .then((res) => res.json())
-      .then((data) => setTables(data.tables ?? []));
-  }
-
-  useEffect(() => {
-    let ignore = false;
-    const tick = () => {
-      fetch("/api/admin/tables/status")
-        .then((res) => res.json())
-        .then((data) => {
-          if (!ignore) setTables(data.tables ?? []);
-        });
-    };
-    tick();
-    const timer = setInterval(tick, LIVE_POLL_INTERVAL_MS);
-    return () => {
-      ignore = true;
-      clearInterval(timer);
-    };
+  const load = useCallback(async () => {
+    const res = await fetch("/api/admin/tables/status");
+    const data = await res.json();
+    setTables(data.tables ?? []);
   }, []);
 
+  useLivePoll(load);
+
   async function markPaid(orderId: string, tableNumber: number) {
-    await fetch(`/api/admin/orders/${orderId}`, {
+    setTables((prev) =>
+      prev.map((table) =>
+        table.currentOrder?.id === orderId
+          ? { ...table, hasOrder: false, orderCount: Math.max(0, table.orderCount - 1), currentOrder: null }
+          : table,
+      ),
+    );
+    const res = await fetch(`/api/admin/orders/${orderId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "COMPLETED" }),
     });
+    if (!res.ok) {
+      toast.error("Hesap kapatılamadı.");
+      await load();
+      return;
+    }
     toast.success(`Masa ${tableNumber} hesabı kapatıldı.`);
-    load();
   }
 
   const busy = tables.filter((t) => t.hasOrder).length;
@@ -163,6 +159,10 @@ export default function TablesPage() {
                     {order.items.map((item, index) => (
                       <li key={`${order.id}-${index}`}>
                         {item.name} ×{item.quantity}
+                        <span className="text-gold">
+                          {" "}
+                          · {ORDER_STATUS_LABELS[item.status] ?? item.status}
+                        </span>
                       </li>
                     ))}
                   </ul>
