@@ -1,12 +1,23 @@
 import { prisma } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/constants";
 
+function withEnvOverrides<T extends Record<string, unknown>>(settings: T) {
+  return {
+    ...settings,
+    name: process.env.NEXT_PUBLIC_RESTAURANT_NAME?.trim() || settings.name,
+    phone: process.env.NEXT_PUBLIC_RESTAURANT_PHONE?.trim() || settings.phone,
+    whatsapp: process.env.NEXT_PUBLIC_WHATSAPP?.trim() || settings.whatsapp,
+    instagram: process.env.NEXT_PUBLIC_INSTAGRAM?.trim() || settings.instagram,
+    googleMapsUrl: process.env.NEXT_PUBLIC_GOOGLE_MAPS_URL?.trim() || settings.googleMapsUrl,
+  };
+}
+
 export async function getSettings() {
   try {
     const row = await prisma.restaurantSettings.findUnique({ where: { id: "default" } });
-    return row ?? DEFAULT_SETTINGS;
+    return withEnvOverrides(row ?? DEFAULT_SETTINGS);
   } catch {
-    return DEFAULT_SETTINGS;
+    return withEnvOverrides(DEFAULT_SETTINGS);
   }
 }
 
