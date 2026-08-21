@@ -26,11 +26,13 @@ export function parseTableParam(value: string): number | null {
 }
 
 export function siteUrl(path = "") {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "http://localhost:3000";
+  const base = raw.replace(/\/$/, "");
+  const suffix = !path || path === "/" ? "" : path.startsWith("/") ? path : `/${path}`;
+  return `${base}${suffix || "/"}`;
 }
 
 export function whatsappLink(phone: string, message?: string) {

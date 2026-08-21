@@ -23,8 +23,16 @@ const greatVibes = Great_Vibes({
   variable: "--font-great-vibes",
 });
 
+function metadataBaseUrl() {
+  try {
+    return new URL(siteUrl());
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl()),
+  metadataBase: metadataBaseUrl(),
   title: {
     default: `${SITE_NAME} | Çiftlikten Soframıza`,
     template: `%s | ${SITE_NAME}`,
