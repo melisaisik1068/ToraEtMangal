@@ -7,6 +7,7 @@ import {
   Bell,
   CalendarDays,
   ClipboardList,
+  History,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -34,6 +35,7 @@ const SECONDARY = [
   { href: "/admin/categories", label: "Kategoriler", icon: Tags },
   { href: "/admin/reservations", label: "Rezervasyon", icon: CalendarDays },
   { href: "/admin/requests", label: "Garson", icon: Bell },
+  { href: "/admin/history", label: "Geçmiş", icon: History },
   { href: "/admin/settings", label: "Ayarlar", icon: Settings },
 ] as const;
 
