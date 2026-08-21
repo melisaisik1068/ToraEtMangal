@@ -16,7 +16,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <MenuHeader backHref="/menu" />
       <div className="grid gap-8 md:grid-cols-2">
         <div className="relative aspect-square overflow-hidden rounded-[2rem]">
-          <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            unoptimized={product.image.startsWith("/") || product.image.startsWith("data:")}
+          />
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-gold">{product.category.name}</p>
