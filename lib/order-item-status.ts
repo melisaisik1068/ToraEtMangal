@@ -1,6 +1,9 @@
 import type { OrderStatus } from "@prisma/client";
 
-/** Aktif (iptal olmayan) ürünlerden sipariş durumunu türet. */
+/**
+ * Aktif ürünlerden sipariş durumunu türet.
+ * En yavaş kalan (darboğaz) ürünü esas alır — tek ürün ilerleyince hepsi hazır görünmez.
+ */
 export function deriveOrderStatusFromItems(
   items: { status: OrderStatus }[],
   current: OrderStatus,
@@ -11,10 +14,10 @@ export function deriveOrderStatusFromItems(
   if (active.length === 0) return "CANCELLED";
 
   if (active.every((item) => item.status === "SERVED")) return "SERVED";
-  if (active.some((item) => item.status === "READY")) return "READY";
-  if (active.some((item) => item.status === "PREPARING" || item.status === "CONFIRMED")) {
+  if (active.some((item) => item.status === "PENDING")) return "PENDING";
+  if (active.some((item) => item.status === "CONFIRMED" || item.status === "PREPARING")) {
     return "PREPARING";
   }
-  if (active.every((item) => item.status === "PENDING")) return "PENDING";
+  if (active.some((item) => item.status === "READY")) return "READY";
   return "PREPARING";
 }

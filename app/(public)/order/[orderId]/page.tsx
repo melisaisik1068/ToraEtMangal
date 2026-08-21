@@ -30,6 +30,8 @@ export default async function OrderDetailPage({
           id: item.id,
           quantity: item.quantity,
           unitPrice: item.unitPrice.toString(),
+          status: item.status as OrderStatusValue,
+          note: item.note,
           product: { name: item.product.name },
         })),
       }}

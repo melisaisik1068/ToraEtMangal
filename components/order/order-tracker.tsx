@@ -44,7 +44,8 @@ type OrderView = {
     id: string;
     quantity: number;
     unitPrice: string;
-    status?: OrderStatusValue;
+    status: OrderStatusValue;
+    note?: string | null;
     product: { name: string };
   }[];
 };
@@ -124,21 +125,39 @@ export function OrderTracker({ initial }: { initial: OrderView }) {
       </ol>
 
       <section className="mt-10 rounded-3xl border border-gold/20 bg-card/60 p-5">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-gold">SİPARİŞ BİLGİLERİ</h2>
+        <h2 className="text-xs uppercase tracking-[0.2em] text-gold">ÜRÜNLER</h2>
         <ul className="mt-4 space-y-3 text-sm">
-          {order.items.map((item) => (
-            <li key={item.id} className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-cream">
-                  {item.product.name} × {item.quantity}
+          {order.items.map((item) => {
+            const itemStatus = item.status ?? order.status;
+            return (
+              <li
+                key={item.id}
+                className="rounded-2xl border border-gold/15 bg-background-deep/40 px-3 py-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-cream">
+                      {item.product.name} × {item.quantity}
+                    </p>
+                    {item.note ? <p className="mt-0.5 text-xs text-muted">{item.note}</p> : null}
+                  </div>
+                  <span className="shrink-0 text-gold">{formatTL(item.unitPrice)}</span>
+                </div>
+                <p
+                  className={cn(
+                    "mt-2 inline-flex rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]",
+                    itemStatus === "READY" || itemStatus === "SERVED"
+                      ? "border-emerald-400/40 text-emerald-200"
+                      : itemStatus === "CANCELLED"
+                        ? "border-destructive/40 text-destructive"
+                        : "border-gold/40 text-gold",
+                  )}
+                >
+                  {ORDER_STATUS_LABELS[itemStatus] ?? itemStatus}
                 </p>
-                <p className="mt-0.5 text-[11px] text-gold">
-                  {ORDER_STATUS_LABELS[item.status ?? order.status] ?? item.status ?? order.status}
-                </p>
-              </div>
-              <span className="text-gold">{formatTL(item.unitPrice)}</span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
         <p className="mt-5 flex justify-between border-t border-gold/15 pt-4 text-base font-semibold">
           TOPLAM <span className="text-xl text-gold">{formatTL(order.total)}</span>

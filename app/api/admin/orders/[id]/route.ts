@@ -133,6 +133,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           },
           data: { status: itemStatus },
         });
+      } else if (parsed.data.status === "CONFIRMED" || parsed.data.status === "PREPARING") {
+        // Sipariş onayında henüz ilerlemiş ürünleri bozma; sadece bekleyenleri ilerlet
+        await prisma.orderItem.updateMany({
+          where: { orderId: id, status: "PENDING" },
+          data: { status: parsed.data.status === "CONFIRMED" ? "CONFIRMED" : "PREPARING" },
+        });
       }
       const order = await prisma.order.update({
         where: { id },

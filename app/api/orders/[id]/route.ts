@@ -21,6 +21,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         id: item.id,
         quantity: item.quantity,
         unitPrice: item.unitPrice.toString(),
+        status: item.status,
+        note: item.note,
         product: { name: item.product.name },
       })),
     },

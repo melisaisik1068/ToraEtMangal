@@ -153,7 +153,7 @@ export function AdminLiveAlerts() {
     await fetch(`/api/admin/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "CONFIRMED" }),
+      body: JSON.stringify({ op: "status", status: "CONFIRMED" }),
     });
   }
 
